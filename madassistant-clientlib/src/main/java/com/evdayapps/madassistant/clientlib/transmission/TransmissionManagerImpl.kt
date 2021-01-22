@@ -250,7 +250,7 @@ class TransmissionManagerImpl(
         data: Map<String, Any?>
     ) {
         try {
-            if (permissionManager.shouldLogAnalytics(destination, eventName)) {
+            if (permissionManager.shouldLogAnalytics(destination, eventName, data)) {
                 transmit(
                     type = MADAssistantTransmissionType.Analytics,
                     encrypt = permissionManager.shouldEncryptAnalytics(),

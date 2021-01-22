@@ -24,7 +24,7 @@ class MADAssistantPermissions {
 
     var networkCalls: NetworkCallsPermissionModel
     var analytics: AnalyticsPermissionModel
-    var crashReports: ExceptionsPermissionModel
+    var exceptions: ExceptionsPermissionModel
     var genericLogs: GenericLogsPermissionModel
 
     var randomString: String?
@@ -35,7 +35,7 @@ class MADAssistantPermissions {
         timestampEnd = null
         networkCalls = NetworkCallsPermissionModel()
         analytics = AnalyticsPermissionModel()
-        crashReports = ExceptionsPermissionModel()
+        exceptions = ExceptionsPermissionModel()
         genericLogs = GenericLogsPermissionModel()
         randomString = null
     }
@@ -61,7 +61,7 @@ class MADAssistantPermissions {
             AnalyticsPermissionModel()
         }
 
-        crashReports = try {
+        exceptions = try {
             json.getOr(KEY_exceptions, JSONObject())
                 .run { ExceptionsPermissionModel(this) }
         } catch (ex: Exception) {
@@ -91,7 +91,7 @@ class MADAssistantPermissions {
         this.timestampEnd = timestampEnd
         this.networkCalls = networkCalls
         this.analytics = analytics
-        this.crashReports = crashReports
+        this.exceptions = crashReports
         this.genericLogs = genericLogs
     }
 
@@ -106,7 +106,7 @@ class MADAssistantPermissions {
 
         json.put(KEY_networkCalls, networkCalls.toJSONObject())
         json.put(KEY_genericLogs, genericLogs.toJSONObject())
-        json.put(KEY_exceptions, crashReports.toJSONObject())
+        json.put(KEY_exceptions, exceptions.toJSONObject())
         json.put(KEY_analytics, analytics.toJSONObject())
         return json
     }
@@ -118,7 +118,7 @@ class MADAssistantPermissions {
                 "deviceId='$deviceId', " +
                 "networkCalls=$networkCalls, " +
                 "analytics=$analytics, " +
-                "crashReports=$crashReports, " +
+                "crashReports=$exceptions, " +
                 "genericLogs=$genericLogs, " +
                 "randomString='$randomString'" +
                 ")"
@@ -133,7 +133,7 @@ class MADAssistantPermissions {
         if (deviceId != other.deviceId) return false
         if (networkCalls != other.networkCalls) return false
         if (analytics != other.analytics) return false
-        if (crashReports != other.crashReports) return false
+        if (exceptions != other.exceptions) return false
         if (genericLogs != other.genericLogs) return false
         if (randomString != other.randomString) return false
 
@@ -146,7 +146,7 @@ class MADAssistantPermissions {
         result = 31 * result + deviceId.hashCode()
         result = 31 * result + networkCalls.hashCode()
         result = 31 * result + analytics.hashCode()
-        result = 31 * result + crashReports.hashCode()
+        result = 31 * result + exceptions.hashCode()
         result = 31 * result + genericLogs.hashCode()
         result = 31 * result + randomString.hashCode()
         return result
@@ -160,7 +160,7 @@ class MADAssistantPermissions {
 
         this.networkCalls.clear()
         this.analytics.clear()
-        this.crashReports.clear()
+        this.exceptions.clear()
         this.genericLogs.clear()
     }
 }

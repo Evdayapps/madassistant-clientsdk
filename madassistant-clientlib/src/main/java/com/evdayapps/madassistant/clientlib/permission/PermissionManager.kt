@@ -63,7 +63,7 @@ interface PermissionManager {
     // endregion Crash Logs
 
     // region Analytics
-    fun shouldLogAnalytics(destination: String, eventName: String): Boolean
+    fun shouldLogAnalytics(destination: String, eventName: String, data: Map<String, Any?>): Boolean
 
     fun shouldEncryptAnalytics() : Boolean
     // endregion Analytics
