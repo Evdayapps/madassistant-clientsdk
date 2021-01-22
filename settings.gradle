@@ -1,0 +1,2 @@
+include ':madassistant-testclient', ':madassistant-common', ':madassistant-clientlib'
+rootProject.name='MADAssistant-Library'
