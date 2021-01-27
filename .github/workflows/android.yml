@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-
+    name: Generate Debug Apk
     runs-on: ubuntu-latest
 
     steps:
