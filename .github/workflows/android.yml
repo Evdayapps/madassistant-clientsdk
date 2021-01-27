@@ -1,5 +1,4 @@
-name: Android CI
-
+name: Generate APK
 on:
   push:
     branches: [ main ]
@@ -21,3 +20,8 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Upload APK
+      uses: actions/upload-artifact@v1
+      with:
+        name: madassistant-testapp
+        path: madassistant-testapp/build/outputs/apk/debug/app-debug.apk
