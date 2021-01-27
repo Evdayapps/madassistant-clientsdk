@@ -1,10 +1,10 @@
-package com.evdayapps.madassistant.clientlib.client
+package com.evdayapps.madassistant.clientlib
 
 import android.content.Context
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionManager
+import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel
 import com.evdayapps.madassistant.common.models.NetworkCallLogModel
 

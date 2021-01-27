@@ -1,6 +1,6 @@
 package com.evdayapps.madassistant.clientlib.adapters
 
-import com.evdayapps.madassistant.clientlib.client.MADAssistantClient
+import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.models.NetworkCallLogModel
 import okhttp3.Headers

@@ -5,8 +5,8 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.evdayapps.madassistant.clientlib.adapters.MADAssistantOkHttpInterceptor
-import com.evdayapps.madassistant.clientlib.client.MADAssistantClient
-import com.evdayapps.madassistant.clientlib.client.MADAssistantClientImpl
+import com.evdayapps.madassistant.clientlib.MADAssistantClient
+import com.evdayapps.madassistant.clientlib.MADAssistantClientImpl
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
 import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionManagerImpl

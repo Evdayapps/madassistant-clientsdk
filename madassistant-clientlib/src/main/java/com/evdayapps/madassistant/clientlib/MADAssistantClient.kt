@@ -1,4 +1,4 @@
-package com.evdayapps.madassistant.clientlib.client
+package com.evdayapps.madassistant.clientlib
 
 import com.evdayapps.madassistant.clientlib.transmission.Transmitter
 

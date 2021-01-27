@@ -20,8 +20,8 @@ import java.security.MessageDigest
 class ConnectionManagerImpl(
     private val applicationContext: Context,
     private val logUtils: LogUtils? = null,
-    private val repoKey : String = "BB:C8:B0:A0:85:DB:E5:D7:5B:50:CB:90:2E:6D:90:87:" +
-            "51:27:27:9A:44:2F:89:90:A0:37:32:93:8D:9D:EC:51"
+    private val repoKey : String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
+            "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
 ) : ConnectionManager, ServiceConnection {
 
     companion object {
