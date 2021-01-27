@@ -23,5 +23,5 @@ jobs:
     - name: Upload APK
       uses: actions/upload-artifact@v1
       with:
-        name: madassistant-testapp
-        path: madassistant-testapp/build/outputs/apk/debug/app-debug.apk
+        name: madassistant-testclient
+        path: madassistant-testclient/build/outputs/apk/debug/app-debug.apk
