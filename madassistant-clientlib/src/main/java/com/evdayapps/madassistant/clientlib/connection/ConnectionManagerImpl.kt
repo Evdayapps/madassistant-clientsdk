@@ -105,6 +105,7 @@ class ConnectionManagerImpl(
      */
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
         logUtils?.i(TAG, "Service connected")
+
         val pkgName = name?.packageName
         if (!pkgName.isNullOrBlank() && isServiceLegit(pkgName)) {
             repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
@@ -169,7 +170,7 @@ class ConnectionManagerImpl(
     }
 
     override fun endSession() {
-        logUtils?.i(TAG, "Ending new session")
+        logUtils?.i(TAG, "Ending session")
         repositoryServiceAIDL?.endSession()
     }
     // endregion Session Management
@@ -190,7 +191,7 @@ class ConnectionManagerImpl(
     // endregion Logging
 
     // region Utils
-    private fun getSig(signature: Signature, key: String): String? {
+    private fun getSig(signature: Signature, key: String): String {
         try {
             val md = MessageDigest.getInstance(key)
             md.update(signature.toByteArray())

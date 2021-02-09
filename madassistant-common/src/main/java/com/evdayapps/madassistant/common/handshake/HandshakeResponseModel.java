@@ -21,6 +21,7 @@ public class HandshakeResponseModel implements Parcelable {
             return new HandshakeResponseModel[size];
         }
     };
+
     /**
      * Was the handshake successful
      * Usually true
@@ -28,10 +29,12 @@ public class HandshakeResponseModel implements Parcelable {
      * - the application doesn't support the sdk version of the client
      */
     public boolean successful;
+
     /**
      * Human readable reason for the failure if {@link #successful} is false
      */
     public String errorMessage;
+
     /**
      * An encrypted string that is shared by the developer with the user
      * The user enters this into the app from the settings screen for an app

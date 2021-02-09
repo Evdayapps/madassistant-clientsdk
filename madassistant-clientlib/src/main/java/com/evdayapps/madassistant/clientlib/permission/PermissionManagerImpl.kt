@@ -19,9 +19,10 @@ class PermissionManagerImpl(
 
     private var permissions: MADAssistantPermissions? = null
 
-    private var patternNetworkCallSubject: Pattern? = null
-    private var patternNetworkCallData: Pattern? = null
-    private var patternAnalyticsDestinationEventname: Pattern? = null
+    private var patternNetworkCallMethod: Pattern? = null
+    private var patternNetworkCallUrl: Pattern? = null
+    private var patternAnalyticsDestination: Pattern? = null
+    private var patternAnalyticsName: Pattern? = null
     private var patternAnalyticsParams: Pattern? = null
     private var patternGenericLogsTag: Pattern? = null
     private var patternGenericLogsMessage: Pattern? = null
@@ -56,14 +57,15 @@ class PermissionManagerImpl(
 
                 // Network Calls Regex
                 val flags = Pattern.MULTILINE and Pattern.CASE_INSENSITIVE
-                patternNetworkCallSubject = permissions.networkCalls.filterSubject?.toPattern(flags)
-                patternNetworkCallData = permissions.networkCalls.filterData?.toPattern(flags)
-                patternAnalyticsDestinationEventname = permissions.analytics.filterSubject?.toPattern(flags)
-                patternAnalyticsParams = permissions.analytics.filterData?.toPattern(flags)
-                patternGenericLogsTag = permissions.genericLogs.filterSubject?.toPattern(flags)
-                patternGenericLogsMessage = permissions.genericLogs.filterData?.toPattern(flags)
-                patternExceptionsType = permissions.exceptions.filterSubject?.toPattern(flags)
-                patternExceptionsMessage = permissions.exceptions.filterData?.toPattern(flags)
+                patternNetworkCallMethod = permissions.networkCalls.filterMethod?.toPattern(flags)
+                patternNetworkCallUrl = permissions.networkCalls.filterUrl?.toPattern(flags)
+                patternAnalyticsDestination = permissions.analytics.filterDestination?.toPattern(flags)
+                patternAnalyticsName = permissions.analytics.filterEventName?.toPattern(flags)
+                patternAnalyticsParams = permissions.analytics.filterParamData?.toPattern(flags)
+                patternGenericLogsTag = permissions.genericLogs.filterTag?.toPattern(flags)
+                patternGenericLogsMessage = permissions.genericLogs.filterMessage?.toPattern(flags)
+                patternExceptionsType = permissions.exceptions.filterType?.toPattern(flags)
+                patternExceptionsMessage = permissions.exceptions.filterMessage?.toPattern(flags)
 
             } catch (ex: JSONException) {
                 return "Authtoken decryption failed ${ex.message}"
@@ -111,16 +113,16 @@ class PermissionManagerImpl(
             return false
         }
 
-        if (patternNetworkCallSubject != null) {
-            if (patternNetworkCallSubject?.matcher(networkCallLogModel.url ?: "")
+        if (patternNetworkCallMethod != null) {
+            if (patternNetworkCallMethod?.matcher(networkCallLogModel.method ?: "")
                     ?.matches() != true
             ) {
                 return false
             }
         }
 
-        if (patternNetworkCallData != null) {
-            if (patternNetworkCallData?.matcher(networkCallLogModel.requestBody ?: "")
+        if (patternNetworkCallUrl != null) {
+            if (patternNetworkCallUrl?.matcher(networkCallLogModel.url ?: "")
                     ?.matches() != true
             ) {
                 return false
@@ -183,10 +185,15 @@ class PermissionManagerImpl(
             return false
         }
 
-        if (patternAnalyticsDestinationEventname != null) {
-            if (patternAnalyticsDestinationEventname?.matcher("$destination::$eventName")
-                    ?.matches() != true
+        if (patternAnalyticsDestination != null) {
+            if (patternAnalyticsDestination?.matcher(destination)?.matches() != true
             ) {
+                return false
+            }
+        }
+
+        patternAnalyticsName?.let {
+            if(patternAnalyticsName?.matcher(destination)?.matches() != true) {
                 return false
             }
         }
@@ -214,11 +221,11 @@ class PermissionManagerImpl(
         }
 
         val subtype = when (type) {
-            Log.VERBOSE -> permissions?.genericLogs?.verbose == true
-            Log.DEBUG -> permissions?.genericLogs?.debug == true
-            Log.WARN -> permissions?.genericLogs?.warning == true
-            Log.ERROR -> permissions?.genericLogs?.error == true
-            Log.INFO -> permissions?.genericLogs?.info == true
+            Log.VERBOSE -> permissions?.genericLogs?.logVerbose == true
+            Log.DEBUG -> permissions?.genericLogs?.logDebug == true
+            Log.WARN -> permissions?.genericLogs?.logWarning == true
+            Log.ERROR -> permissions?.genericLogs?.logError == true
+            Log.INFO -> permissions?.genericLogs?.logInfo == true
             else -> false
         }
         if(!subtype) {
