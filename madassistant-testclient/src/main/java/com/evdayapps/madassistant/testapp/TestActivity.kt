@@ -48,32 +48,14 @@ class TestActivity : AppCompatActivity() {
             }
         }
 
-        val cipher = MADAssistantCipherImpl(
-            passPhrase = "Thisisatest"
-        )
-
-        val connectionManagerImpl = ConnectionManagerImpl(
-            applicationContext = applicationContext,
-            logUtils = logUtils
-        )
-
-        val permissionManagerImpl = PermissionManagerImpl(
-            cipher = cipher,
-            logUtils = logUtils
-        )
-
-        val transmissionManagerImpl = TransmissionManagerImpl(
-            cipher,
-            permissionManagerImpl,
-            connectionManagerImpl,
-            logUtils
-        )
-
         madAssistantClient = MADAssistantClientImpl(
             applicationContext = applicationContext,
-            connectionManager = connectionManagerImpl,
-            permissionManager = permissionManagerImpl,
-            transmitter = transmissionManagerImpl,
+            connectionManager = ConnectionManagerImpl(
+                applicationContext = applicationContext,
+                repoKey = "",
+                logUtils = logUtils
+            ),
+            passphrase = "test",
             logUtils = logUtils
         )
 

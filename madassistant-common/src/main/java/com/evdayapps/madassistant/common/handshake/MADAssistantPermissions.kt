@@ -37,28 +37,28 @@ data class MADAssistantPermissions(
         deviceId = json.getOr(KEY_deviceId, "")
 
         networkCalls = try {
-            json.getOr(KEY_networkCalls, "")
+            json.getOr(KEY_networkCalls, JSONObject())
                 .run { NetworkCallsPermissionModel(this) }
         } catch (ex: Exception) {
             NetworkCallsPermissionModel()
         }
 
         analytics = try {
-            json.getOr(KEY_analytics, "")
+            json.getOr(KEY_analytics, JSONObject())
                 .run { AnalyticsCallsPermissionModel(this) }
         } catch (ex: Exception) {
             AnalyticsCallsPermissionModel()
         }
 
         exceptions = try {
-            json.getOr(KEY_exceptions, "")
+            json.getOr(KEY_exceptions, JSONObject())
                 .run { ExceptionsPermissionModel(this) }
         } catch (ex: Exception) {
             ExceptionsPermissionModel()
         }
 
         genericLogs = try {
-            json.getOr(KEY_genericLogs, "")
+            json.getOr(KEY_genericLogs, JSONObject())
                 .run { GenericLogsPermissionModel(this) }
         } catch (ex: Exception) {
             GenericLogsPermissionModel()

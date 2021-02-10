@@ -107,7 +107,7 @@ class ConnectionManagerImpl(
         logUtils?.i(TAG, "Service connected")
 
         val pkgName = name?.packageName
-        if (!pkgName.isNullOrBlank() && isServiceLegit(pkgName)) {
+        if (!pkgName.isNullOrBlank() && (repoKey.isNullOrBlank() || isServiceLegit(pkgName))) {
             repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
             Thread.sleep(300)
             performHandshake()

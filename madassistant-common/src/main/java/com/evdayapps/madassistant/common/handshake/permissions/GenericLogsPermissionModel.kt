@@ -31,8 +31,8 @@ data class GenericLogsPermissionModel(
     }
 
     @Throws(Exception::class)
-    constructor(json : String) : this() {
-        JSONObject(json).apply {
+    constructor(json : JSONObject) : this() {
+        json.run {
             enabled = getOr(KEY_enabled, false)
             read = getOr(KEY_read, false)
             share = getOr(KEY_share, false)

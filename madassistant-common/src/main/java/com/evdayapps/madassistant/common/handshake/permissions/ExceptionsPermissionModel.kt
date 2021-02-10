@@ -22,8 +22,8 @@ data class ExceptionsPermissionModel(
     }
 
     @Throws(Exception::class)
-    constructor(json: String) : this() {
-        JSONObject(json).run {
+    constructor(json: JSONObject) : this() {
+        json.run {
             enabled = optBoolean(KEY_enabled, false)
             read = optBoolean(KEY_read, false)
             share = optBoolean(KEY_share, false)
