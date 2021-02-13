@@ -2,7 +2,6 @@ package com.evdayapps.madassistant.common.models
 
 import org.json.JSONArray
 import org.json.JSONObject
-import java.lang.reflect.InvocationTargetException
 
 class ExceptionStacktraceLineModel {
 
@@ -53,47 +52,73 @@ class ExceptionStacktraceLineModel {
 
 class ExceptionModel {
 
-    val crash : Boolean
-    val exceptionType : String?
-    val description : String?
+    val exceptionThreadName: String
+    val crash: Boolean
+    val type: String?
     val message: String?
     val stackTrace: List<ExceptionStacktraceLineModel>
+    val cause: ExceptionModel?
+    val threads: Map<String, List<ExceptionStacktraceLineModel>>?
 
     companion object {
-        private const val KEY_ISCRASH = "ISCRASH"
-        private const val KEY_TYPE = "TYPE"
-        private const val KEY_DESCRIPTION = "DESCRIPTION"
-        private const val KEY_MESSAGE = "MESSAGE"
-        private const val KEY_STACKTRACE = "STACKTRACE"
+        private const val KEY_exceptionThreadName = "exceptionThreadName"
+        private const val KEY_isCrash = "isCrash"
+        private const val KEY_type = "type"
+        private const val KEY_message = "message"
+        private const val KEY_stacktrace = "stacktrace"
+        private const val KEY_cause = "cause"
+        private const val KEY_threads = "threads"
     }
 
-    constructor(throwable: Throwable, isCrash: Boolean) {
-        var actual = when (throwable.cause) {
-            is InvocationTargetException -> (throwable.cause as InvocationTargetException).targetException
-            else -> throwable
-        }
-        actual = actual.cause ?: actual ?: throwable
-
+    /**
+     * @param throwable The throwable to log
+     * @param isCrash Whether this is a crash or a handled exception
+     * @param nested Is this a nested model ([cause] for another exception)?
+     *               if yes, wont log threads
+     */
+    constructor(throwable: Throwable, isCrash: Boolean, nested: Boolean = false) {
+        exceptionThreadName = Thread.currentThread().name
         crash = isCrash
-        exceptionType = actual.javaClass.simpleName
-        description = actual.toString()
-        message = actual.message ?: ""
-        stackTrace = actual.stackTrace.map {
-            ExceptionStacktraceLineModel(it)
-        }
+        type = throwable.javaClass.canonicalName
+        message = throwable.message
+        stackTrace = throwable.stackTrace.map { ExceptionStacktraceLineModel(it) }
+        cause = throwable.cause?.run { ExceptionModel(throwable = this, isCrash = false, nested = true) }
+        threads = if (!nested) {
+            mutableMapOf<String, List<ExceptionStacktraceLineModel>>().apply {
+                putAll(
+                    Thread.getAllStackTraces().map {
+                        Pair(
+                            first = it.key.name,
+                            second = it.value.map { ExceptionStacktraceLineModel(it) }
+                        )
+                    }
+                )
+            }
+        } else null
     }
 
     @Throws(Exception::class)
     constructor(json: String) {
         JSONObject(json).apply {
-            crash = optBoolean(KEY_ISCRASH, true)
-            exceptionType = getString(KEY_TYPE)
-            description = getString(KEY_DESCRIPTION)
-            message = getString(KEY_MESSAGE)
-            stackTrace = getJSONArray(KEY_STACKTRACE).run {
+            exceptionThreadName = getString(KEY_exceptionThreadName)
+            crash = optBoolean(KEY_isCrash, true)
+            type = getString(KEY_type)
+            message = getString(KEY_message)
+            cause = if (has(KEY_cause)) getString(KEY_cause).run { ExceptionModel(this) } else null
+            threads = if (!has(KEY_threads)) null else getString(KEY_threads).run {
+                try {
+                    JSONArray(this).run {
+
+                    }
+                } catch (ex: Exception) {
+                    //
+                }
+                emptyMap()
+            }
+            stackTrace = getJSONArray(KEY_stacktrace).run {
                 mutableListOf<ExceptionStacktraceLineModel>().apply {
                     for (i in 0 until this@run.length()) {
-                        this@apply.add(ExceptionStacktraceLineModel(getString(i)))
+                        add(ExceptionStacktraceLineModel(getString(i)))
                     }
                 }
             }
@@ -103,11 +128,25 @@ class ExceptionModel {
     @Throws(Exception::class)
     fun toJsonObject(): JSONObject {
         return JSONObject().apply {
-            put(KEY_ISCRASH, crash)
-            put(KEY_TYPE, exceptionType)
-            put(KEY_DESCRIPTION, description)
-            put(KEY_MESSAGE, message)
-            put(KEY_STACKTRACE, JSONArray().apply {
+            put(KEY_exceptionThreadName, exceptionThreadName)
+            put(KEY_isCrash, crash)
+            put(KEY_type, type)
+            put(KEY_message, message)
+            cause?.run { put(KEY_cause, this) }
+            threads?.let {
+                JSONObject().apply {
+                    it.forEach {
+                        put(it.key, JSONArray().apply {
+                            it.value.forEach {
+                                put(it.toJsonObject())
+                            }
+                        })
+                    }
+                }.let {
+                    put(KEY_threads, it)
+                }
+            }
+            put(KEY_stacktrace, JSONArray().apply {
                 stackTrace.forEach {
                     put(it.toJsonObject())
                 }
