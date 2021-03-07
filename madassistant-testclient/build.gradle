@@ -43,5 +43,5 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:3.14.9")
 
     implementation project(path: ':madassistant-clientlib')
-    implementation project(path: ':madassistant-adapter-okhttp3')
+    implementation project(path: ':madassistant-adapter-okhttp3-3')
 }
