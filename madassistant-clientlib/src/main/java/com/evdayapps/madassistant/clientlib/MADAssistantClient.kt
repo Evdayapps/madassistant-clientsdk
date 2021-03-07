@@ -1,8 +1,8 @@
 package com.evdayapps.madassistant.clientlib
 
-import com.evdayapps.madassistant.clientlib.transmission.Transmitter
+import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
-interface MADAssistantClient : Transmitter {
+interface MADAssistantClient {
 
     fun bindToService()
 
@@ -25,5 +25,24 @@ interface MADAssistantClient : Transmitter {
      * Need not be used in general usage
      */
     fun endSession()
+
+    fun logNetworkCall(data: NetworkCallLogModel)
+
+    fun logCrashReport(throwable: Throwable)
+
+    fun logAnalyticsEvent(
+        destination: String,
+        eventName: String,
+        data: Map<String, Any?>
+    )
+
+    fun logGenericLog(
+        type: Int,
+        tag: String,
+        message: String,
+        data: Map<String, Any?>? = null
+    )
+
+    fun logException(throwable: Throwable)
 
 }

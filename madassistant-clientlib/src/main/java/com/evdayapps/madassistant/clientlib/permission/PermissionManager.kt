@@ -1,6 +1,6 @@
 package com.evdayapps.madassistant.clientlib.permission
 
-import com.evdayapps.madassistant.common.models.NetworkCallLogModel
+import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
  * Encapsulation of all permission logic for dealing with the repository

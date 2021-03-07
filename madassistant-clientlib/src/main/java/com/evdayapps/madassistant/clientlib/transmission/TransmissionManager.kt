@@ -1,6 +1,8 @@
 package com.evdayapps.madassistant.clientlib.transmission
 
-interface TransmissionManager : Transmitter {
+import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
+
+interface TransmissionManager {
 
     /**
      * Initiates a new session
@@ -12,5 +14,15 @@ interface TransmissionManager : Transmitter {
      * Ends a session
      */
     fun endSession()
+
+    fun logNetworkCall(data: NetworkCallLogModel)
+
+    fun logCrashReport(throwable: Throwable)
+
+    fun logAnalyticsEvent(destination: String, eventName: String, data: Map<String, Any?>)
+
+    fun logGenericLog(type: Int, tag: String, message: String, data : Map<String, Any?>?)
+
+    fun logException(throwable: Throwable)
 
 }

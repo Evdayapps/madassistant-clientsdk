@@ -4,7 +4,7 @@ import android.util.Log
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.encryption.MADAssistantCipher
 import com.evdayapps.madassistant.common.handshake.MADAssistantPermissions
-import com.evdayapps.madassistant.common.models.NetworkCallLogModel
+import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.InvalidObjectException
@@ -57,15 +57,45 @@ class PermissionManagerImpl(
 
                 // Network Calls Regex
                 val flags = Pattern.MULTILINE and Pattern.CASE_INSENSITIVE
-                patternNetworkCallMethod = permissions.networkCalls.filterMethod?.toPattern(flags)
-                patternNetworkCallUrl = permissions.networkCalls.filterUrl?.toPattern(flags)
-                patternAnalyticsDestination = permissions.analytics.filterDestination?.toPattern(flags)
-                patternAnalyticsName = permissions.analytics.filterEventName?.toPattern(flags)
-                patternAnalyticsParams = permissions.analytics.filterParamData?.toPattern(flags)
-                patternGenericLogsTag = permissions.genericLogs.filterTag?.toPattern(flags)
-                patternGenericLogsMessage = permissions.genericLogs.filterMessage?.toPattern(flags)
-                patternExceptionsType = permissions.exceptions.filterType?.toPattern(flags)
-                patternExceptionsMessage = permissions.exceptions.filterMessage?.toPattern(flags)
+                patternNetworkCallMethod =
+                    permissions.networkCalls.filterMethod
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
+                patternNetworkCallUrl =
+                    permissions.networkCalls.filterUrl
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
+
+                patternAnalyticsDestination =
+                    permissions.analytics.filterDestination
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
+                patternAnalyticsName =
+                    permissions.analytics.filterEventName
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
+
+                patternAnalyticsParams =
+                    permissions.analytics.filterParamData
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
+                patternGenericLogsTag =
+                    permissions.genericLogs.filterTag
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
+                patternGenericLogsMessage =
+                    permissions.genericLogs.filterMessage
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
+
+                patternExceptionsType =
+                    permissions.exceptions.filterType
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
+                patternExceptionsMessage =
+                    permissions.exceptions.filterMessage
+                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.toPattern(flags)
 
             } catch (ex: JSONException) {
                 return "Authtoken decryption failed ${ex.message}"
@@ -193,7 +223,7 @@ class PermissionManagerImpl(
         }
 
         patternAnalyticsName?.let {
-            if(patternAnalyticsName?.matcher(destination)?.matches() != true) {
+            if (patternAnalyticsName?.matcher(destination)?.matches() != true) {
                 return false
             }
         }
@@ -228,7 +258,7 @@ class PermissionManagerImpl(
             Log.INFO -> permissions?.genericLogs?.logInfo == true
             else -> false
         }
-        if(!subtype) {
+        if (!subtype) {
             return false
         }
 

@@ -7,10 +7,10 @@ import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
 import com.evdayapps.madassistant.common.encryption.MADAssistantCipher
-import com.evdayapps.madassistant.common.models.AnalyticsEventModel
-import com.evdayapps.madassistant.common.models.ExceptionModel
-import com.evdayapps.madassistant.common.models.GenericLogModel
-import com.evdayapps.madassistant.common.models.NetworkCallLogModel
+import com.evdayapps.madassistant.common.models.analytics.AnalyticsEventModel
+import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
+import com.evdayapps.madassistant.common.models.genericlog.GenericLogModel
+import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import com.evdayapps.madassistant.common.transmission.TransmissionModel
 import java.util.*
 
@@ -65,12 +65,10 @@ class TransmissionManagerImpl(
             }
 
             MADAssistantTransmissionType.GenericLogs -> {
-                (msg.obj as? Triple<Int, String, String>)
+                (msg.obj as? GenericLogModel)
                     ?.let {
                         _logGenericLog(
-                            type = it.first,
-                            tag = it.second,
-                            message = it.third,
+                            data = it
                         )
                     }
             }
@@ -268,12 +266,17 @@ class TransmissionManagerImpl(
     // endregion Logging: Analytics
 
     // region Logging: Generic Logs
-    override fun logGenericLog(type: Int, tag: String, message: String) {
+    override fun logGenericLog(type: Int, tag: String, message: String, data: Map<String, Any?>?) {
         try {
             _clientHandler.sendMessage(
                 _clientHandler.obtainMessage(
                     MADAssistantTransmissionType.GenericLogs,
-                    Triple(type, tag, message)
+                    GenericLogModel(
+                        type = type,
+                        tag = tag,
+                        message = message,
+                        data = data
+                    )
                 )
             )
         } catch (ex: Exception) {
@@ -281,17 +284,13 @@ class TransmissionManagerImpl(
         }
     }
 
-    private fun _logGenericLog(type: Int, tag: String, message: String) {
+    private fun _logGenericLog(data: GenericLogModel) {
         try {
-            if (permissionManager.shouldLogGenericLog(type, tag, message)) {
+            if (permissionManager.shouldLogGenericLog(data.type, data.tag, data.message)) {
                 transmit(
                     type = MADAssistantTransmissionType.GenericLogs,
                     encrypt = permissionManager.shouldEncryptGenericLogs(),
-                    json = GenericLogModel(
-                        type = type,
-                        tag = tag,
-                        message = message
-                    ).toJsonObject().toString(0)
+                    json = data.toJsonObject().toString(0)
                 )
             }
         } catch (ex: Exception) {

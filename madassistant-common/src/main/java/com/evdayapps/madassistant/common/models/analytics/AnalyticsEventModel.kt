@@ -1,4 +1,4 @@
-package com.evdayapps.madassistant.common.models
+package com.evdayapps.madassistant.common.models.analytics
 
 import org.json.JSONObject
 

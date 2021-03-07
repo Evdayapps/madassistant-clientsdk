@@ -11,7 +11,7 @@ import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.encryption.MADAssistantCipher
 import com.evdayapps.madassistant.common.encryption.MADAssistantCipherImpl
 import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel
-import com.evdayapps.madassistant.common.models.NetworkCallLogModel
+import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
  * An implementation of [MADAssistantClient]
@@ -124,8 +124,8 @@ class MADAssistantClientImpl(
         data: Map<String, Any?>
     ) = transmitter.logAnalyticsEvent(destination, eventName, data)
 
-    override fun logGenericLog(type: Int, tag: String, message: String) =
-        transmitter.logGenericLog(type, tag, message)
+    override fun logGenericLog(type: Int, tag: String, message: String, data: Map<String, Any?>?) =
+        transmitter.logGenericLog(type, tag, message, data)
 
     override fun logException(throwable: Throwable) =
         transmitter.logException(throwable)

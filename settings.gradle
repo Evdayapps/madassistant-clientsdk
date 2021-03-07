@@ -1,2 +1,3 @@
+include ':madassistant-adapter-okhttp3'
 include ':madassistant-testclient', ':madassistant-common', ':madassistant-clientlib'
 rootProject.name='MADAssistant-Library'
