@@ -13,6 +13,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import kotlin.random.Random
 
 class TestActivity : AppCompatActivity() {
 
@@ -87,7 +88,9 @@ class TestActivity : AppCompatActivity() {
 
     fun testAnalytics(view: View) {
         madAssistantClient.logAnalyticsEvent(
-            destination = "GoogleAnalytics",
+            destination = listOf(
+                "Destination 1", "Destination 2", "Destination 3"
+            )[Random.nextInt(0, 3)],
             eventName = "Heartbeat",
             data = mapOf(
                 "timestamp" to System.currentTimeMillis(),
@@ -99,9 +102,15 @@ class TestActivity : AppCompatActivity() {
 
     fun testGenericLog(view: View) {
         madAssistantClient.logGenericLog(
-            type = Log.VERBOSE,
+            type = listOf(
+                Log.VERBOSE, Log.DEBUG, Log.ERROR, Log.INFO, Log.WARN
+            )[Random.nextInt(from = 0, until = 5)],
             tag = "TestActivity",
             message = "testGenericLog: Entered ${System.currentTimeMillis()}",
+            data = mapOf(
+                "Key1" to "value1",
+                "Random1" to Random.nextInt() * 3000
+            )
         )
     }
 
