@@ -1,1 +1,9 @@
-<manifest package="com.evdayapps.madassistant.clientlib" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.evdayapps.madassistant.clientlib">
+
+    <queries>
+        <package android:name="com.evdayapps.madassistant.repository" />
+    </queries>
+
+
+</manifest>
