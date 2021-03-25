@@ -71,7 +71,7 @@ class TestActivity : AppCompatActivity() {
                     )
                     .build()
                 val request = Request.Builder()
-                    .url("https://in.bookmyshow.com/api/explore/v1/discover/home")
+                    .url("https://demo0064639.mockable.io/api/explore/thisisamock-showcasescreen")
                     .build()
                 val response = client.newCall(request).execute()
                 Log.i("TestActivity", "response: ${response.body.toString()}")

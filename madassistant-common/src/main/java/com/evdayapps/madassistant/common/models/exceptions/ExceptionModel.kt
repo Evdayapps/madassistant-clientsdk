@@ -62,7 +62,7 @@ class ExceptionModel {
             exceptionThreadName = getString(KEY_exceptionThreadName)
             crash = optBoolean(KEY_isCrash, true)
             type = getString(KEY_type)
-            message = getString(KEY_message)
+            message = optString(KEY_message)
             cause = if (has(KEY_cause)) getString(KEY_cause).run { ExceptionModel(this) } else null
             threads = if (!has(KEY_threads)) null else getString(KEY_threads).run {
                 try {
@@ -91,7 +91,7 @@ class ExceptionModel {
             put(KEY_isCrash, crash)
             put(KEY_type, type)
             put(KEY_message, message)
-            cause?.run { put(KEY_cause, this) }
+            cause?.run { put(KEY_cause, this.toJsonObject()) }
             threads?.let {
                 JSONObject().apply {
                     it.forEach {
