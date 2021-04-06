@@ -64,16 +64,7 @@ class ExceptionModel {
             type = getString(KEY_type)
             message = optString(KEY_message)
             cause = if (has(KEY_cause)) getString(KEY_cause).run { ExceptionModel(this) } else null
-            threads = if (!has(KEY_threads)) null else getString(KEY_threads).run {
-                try {
-                    JSONArray(this).run {
-
-                    }
-                } catch (ex: Exception) {
-                    //
-                }
-                emptyMap()
-            }
+            threads = if (!has(KEY_threads)) null else getThreadsStacktrace(getString(KEY_threads))
             stackTrace = getJSONArray(KEY_stacktrace).run {
                 mutableListOf<ExceptionStacktraceLineModel>().apply {
                     for (i in 0 until this@run.length()) {
@@ -84,6 +75,29 @@ class ExceptionModel {
         }
     }
 
+    private fun getThreadsStacktrace(string : String) : Map<String, List<ExceptionStacktraceLineModel>> {
+        try {
+            val map = mutableMapOf<String , List<ExceptionStacktraceLineModel>>()
+            val json = JSONObject(string)
+            json.keys().forEach { key ->
+                val arr = json.getJSONArray(key)
+                val list = mutableListOf<ExceptionStacktraceLineModel>()
+                for(i in 0 until arr.length()) {
+                    arr.getString(i)
+                        .run { ExceptionStacktraceLineModel(this) }
+                        .let { list.add(it) }
+
+                }
+                map[key] = list
+            }
+
+            return map
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+        return mapOf()
+    }
+
     @Throws(Exception::class)
     fun toJsonObject(): JSONObject {
         return JSONObject().apply {
@@ -92,19 +106,24 @@ class ExceptionModel {
             put(KEY_type, type)
             put(KEY_message, message)
             cause?.run { put(KEY_cause, this.toJsonObject()) }
-            threads?.let {
-                JSONObject().apply {
-                    it.forEach {
-                        put(it.key, JSONArray().apply {
-                            it.value.forEach {
-                                put(it.toJsonObject())
+            threads
+                ?.let {
+                    JSONObject()
+                        .apply {
+                            it.forEach {
+                                put(
+                                    it.key,
+                                    JSONArray().apply {
+                                        it.value.forEach {
+                                            put(it.toJsonObject())
+                                        }
+                                    }
+                                )
                             }
-                        })
-                    }
-                }.let {
-                    put(KEY_threads, it)
+                        }.let {
+                            put(KEY_threads, it)
+                        }
                 }
-            }
             put(KEY_stacktrace, JSONArray().apply {
                 stackTrace.forEach {
                     put(it.toJsonObject())
