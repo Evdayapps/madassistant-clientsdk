@@ -39,25 +39,25 @@ class TransmissionManagerImpl(
         when (msg.what) {
             MADAssistantTransmissionType.NetworkCall -> {
                 (msg.obj as? MessageData)?.let {
-                    _logNetworkCall(it)
+                    _processNetworkCall(it)
                 }
             }
 
             MADAssistantTransmissionType.Analytics -> {
                 (msg.obj as? MessageData)?.let {
-                    _logAnalyticsEvent(it)
+                    _processAnalyticsEvent(it)
                 }
             }
 
             MADAssistantTransmissionType.Exception -> {
                 (msg.obj as? MessageData)?.let {
-                    _logException(it)
+                    _processException(it)
                 }
             }
 
             MADAssistantTransmissionType.GenericLogs -> {
                 (msg.obj as? MessageData)?.let {
-                    _logGenericLog(it)
+                    _processGenericLog(it)
                 }
             }
         }
@@ -158,7 +158,7 @@ class TransmissionManagerImpl(
 
     }
 
-    private fun _logNetworkCall(data: MessageData) {
+    private fun _processNetworkCall(data: MessageData) {
         try {
             val payload = data.first as NetworkCallLogModel
             if (permissionManager.shouldLogNetworkCall(payload)) {
@@ -178,23 +178,14 @@ class TransmissionManagerImpl(
 
     // region Logging: Crash Reports
     override fun logCrashReport(throwable: Throwable) {
-        try {
-            _clientHandler.sendMessage(
-                _clientHandler.obtainMessage(
-                    MADAssistantTransmissionType.Exception,
-                    MessageData(
-                        threadName = Thread.currentThread().name,
-                        first = throwable,
-                        second = true
-                    )
-                )
-            )
-        } catch (ex: Exception) {
-            logUtils?.e(ex)
-        }
+        _processException(throwable, true)
     }
 
     override fun logException(throwable: Throwable) {
+        _processException(throwable, false)
+    }
+
+    private fun _processException(throwable: Throwable, crashReport : Boolean) {
         try {
             _clientHandler.sendMessage(
                 _clientHandler.obtainMessage(
@@ -202,7 +193,7 @@ class TransmissionManagerImpl(
                     MessageData(
                         threadName = Thread.currentThread().name,
                         first = throwable,
-                        second = false
+                        second = crashReport
                     )
                 )
             )
@@ -211,7 +202,7 @@ class TransmissionManagerImpl(
         }
     }
 
-    private fun _logException(messageData: MessageData) {
+    private fun _processException(messageData: MessageData) {
         try {
             val throwable: Throwable = messageData.first as Throwable
             if (permissionManager.shouldLogExceptions(throwable)) {
@@ -257,7 +248,7 @@ class TransmissionManagerImpl(
         }
     }
 
-    private fun _logAnalyticsEvent(messageData: MessageData) {
+    private fun _processAnalyticsEvent(messageData: MessageData) {
         try {
             val destination = messageData.first as String
             val eventName = messageData.second as String
@@ -305,7 +296,7 @@ class TransmissionManagerImpl(
         }
     }
 
-    private fun _logGenericLog(messageData: MessageData) {
+    private fun _processGenericLog(messageData: MessageData) {
         try {
             val type = messageData.first as Int
             val tag = messageData.second as String
