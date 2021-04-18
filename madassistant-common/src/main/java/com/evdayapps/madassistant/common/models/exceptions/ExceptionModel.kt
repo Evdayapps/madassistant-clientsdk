@@ -29,19 +29,27 @@ class ExceptionModel {
      * @param nested Is this a nested model ([cause] for another exception)?
      *               if yes, wont log threads
      */
-    constructor(throwable: Throwable, isCrash: Boolean, nested: Boolean = false) {
-        exceptionThreadName = Thread.currentThread().name
+    constructor(
+        threadName: String,
+        throwable: Throwable,
+        isCrash: Boolean,
+        nested: Boolean = false
+    ) {
+        exceptionThreadName = threadName
         crash = isCrash
         type = throwable.javaClass.canonicalName
         message = throwable.message
         stackTrace = throwable.stackTrace.map { ExceptionStacktraceLineModel(it) }
+
         cause = throwable.cause?.run {
             ExceptionModel(
+                threadName = threadName,
                 throwable = this,
                 isCrash = false,
                 nested = true
             )
         }
+
         threads = if (!nested) {
             mutableMapOf<String, List<ExceptionStacktraceLineModel>>().apply {
                 putAll(

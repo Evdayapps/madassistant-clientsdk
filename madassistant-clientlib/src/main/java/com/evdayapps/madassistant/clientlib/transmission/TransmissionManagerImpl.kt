@@ -38,39 +38,27 @@ class TransmissionManagerImpl(
     private val _handlerCallback = Handler.Callback { msg ->
         when (msg.what) {
             MADAssistantTransmissionType.NetworkCall -> {
-                (msg.obj as? NetworkCallLogModel)?.let {
+                (msg.obj as? MessageData)?.let {
                     _logNetworkCall(it)
                 }
             }
 
             MADAssistantTransmissionType.Analytics -> {
-                (msg.obj as? Triple<String, String, Map<String, Any?>>)
-                    ?.let {
-                        _logAnalyticsEvent(
-                            destination = it.first,
-                            eventName = it.second,
-                            data = it.third
-                        )
-                    }
+                (msg.obj as? MessageData)?.let {
+                    _logAnalyticsEvent(it)
+                }
             }
 
             MADAssistantTransmissionType.Exception -> {
-                (msg.obj as? Pair<Throwable, Boolean>)
-                    ?.let {
-                        _logException(
-                            throwable = it.first,
-                            crashReport = it.second
-                        )
-                    }
+                (msg.obj as? MessageData)?.let {
+                    _logException(it)
+                }
             }
 
             MADAssistantTransmissionType.GenericLogs -> {
-                (msg.obj as? GenericLogModel)
-                    ?.let {
-                        _logGenericLog(
-                            data = it
-                        )
-                    }
+                (msg.obj as? MessageData)?.let {
+                    _logGenericLog(it)
+                }
             }
         }
 
@@ -156,7 +144,13 @@ class TransmissionManagerImpl(
     override fun logNetworkCall(data: NetworkCallLogModel) {
         try {
             _clientHandler.sendMessage(
-                _clientHandler.obtainMessage(MADAssistantTransmissionType.NetworkCall, data)
+                _clientHandler.obtainMessage(
+                    MADAssistantTransmissionType.NetworkCall,
+                    MessageData(
+                        threadName = Thread.currentThread().name,
+                        first = data
+                    )
+                )
             )
         } catch (ex: Exception) {
             logUtils?.e(ex)
@@ -164,11 +158,14 @@ class TransmissionManagerImpl(
 
     }
 
-    private fun _logNetworkCall(data: NetworkCallLogModel) {
+    private fun _logNetworkCall(data: MessageData) {
         try {
-            if (permissionManager.shouldLogNetworkCall(data)) {
+            val payload = data.first as NetworkCallLogModel
+            if (permissionManager.shouldLogNetworkCall(payload)) {
+                val json = payload.toJsonObject().toString(0)
+
                 transmit(
-                    json = data.toJsonObject().toString(0),
+                    json = json,
                     type = MADAssistantTransmissionType.NetworkCall,
                     encrypt = permissionManager.shouldEncryptApiLog()
                 )
@@ -185,7 +182,11 @@ class TransmissionManagerImpl(
             _clientHandler.sendMessage(
                 _clientHandler.obtainMessage(
                     MADAssistantTransmissionType.Exception,
-                    Pair(throwable, true)
+                    MessageData(
+                        threadName = Thread.currentThread().name,
+                        first = throwable,
+                        second = true
+                    )
                 )
             )
         } catch (ex: Exception) {
@@ -198,7 +199,11 @@ class TransmissionManagerImpl(
             _clientHandler.sendMessage(
                 _clientHandler.obtainMessage(
                     MADAssistantTransmissionType.Exception,
-                    Pair(throwable, false)
+                    MessageData(
+                        threadName = Thread.currentThread().name,
+                        first = throwable,
+                        second = false
+                    )
                 )
             )
         } catch (ex: Exception) {
@@ -206,14 +211,19 @@ class TransmissionManagerImpl(
         }
     }
 
-    private fun _logException(throwable: Throwable, crashReport: Boolean) {
+    private fun _logException(messageData: MessageData) {
         try {
+            val throwable: Throwable = messageData.first as Throwable
             if (permissionManager.shouldLogExceptions(throwable)) {
+                val isCrash = messageData.second as Boolean
+                val json = ExceptionModel(
+                    threadName = messageData.threadName,
+                    throwable = throwable,
+                    isCrash = isCrash
+                ).toJsonObject().toString(0)
+
                 transmit(
-                    json = ExceptionModel(
-                        throwable = throwable,
-                        isCrash = crashReport
-                    ).toJsonObject().toString(0),
+                    json = json,
                     type = MADAssistantTransmissionType.Exception,
                     encrypt = permissionManager.shouldEncryptCrashReports()
                 )
@@ -234,7 +244,12 @@ class TransmissionManagerImpl(
             _clientHandler.sendMessage(
                 _clientHandler.obtainMessage(
                     MADAssistantTransmissionType.Analytics,
-                    Triple(destination, eventName, data)
+                    MessageData(
+                        threadName = Thread.currentThread().name,
+                        first = destination,
+                        second = eventName,
+                        third = data
+                    )
                 )
             )
         } catch (ex: Exception) {
@@ -242,17 +257,17 @@ class TransmissionManagerImpl(
         }
     }
 
-    private fun _logAnalyticsEvent(
-        destination: String,
-        eventName: String,
-        data: Map<String, Any?>
-    ) {
+    private fun _logAnalyticsEvent(messageData: MessageData) {
         try {
+            val destination = messageData.first as String
+            val eventName = messageData.second as String
+            val data = messageData.third as Map<String, Any?>
             if (permissionManager.shouldLogAnalytics(destination, eventName, data)) {
                 transmit(
                     type = MADAssistantTransmissionType.Analytics,
                     encrypt = permissionManager.shouldEncryptAnalytics(),
                     json = AnalyticsEventModel(
+                        threadName = messageData.threadName,
                         destination = destination,
                         name = eventName,
                         params = data
@@ -266,16 +281,22 @@ class TransmissionManagerImpl(
     // endregion Logging: Analytics
 
     // region Logging: Generic Logs
-    override fun logGenericLog(type: Int, tag: String, message: String, data: Map<String, Any?>?) {
+    override fun logGenericLog(
+        type: Int,
+        tag: String,
+        message: String,
+        data: Map<String, Any?>?
+    ) {
         try {
             _clientHandler.sendMessage(
                 _clientHandler.obtainMessage(
                     MADAssistantTransmissionType.GenericLogs,
-                    GenericLogModel(
-                        type = type,
-                        tag = tag,
-                        message = message,
-                        data = data
+                    MessageData(
+                        threadName = Thread.currentThread().name,
+                        first = type,
+                        second = tag,
+                        third = message,
+                        fourth = data
                     )
                 )
             )
@@ -284,13 +305,25 @@ class TransmissionManagerImpl(
         }
     }
 
-    private fun _logGenericLog(data: GenericLogModel) {
+    private fun _logGenericLog(messageData: MessageData) {
         try {
-            if (permissionManager.shouldLogGenericLog(data.type, data.tag, data.message)) {
+            val type = messageData.first as Int
+            val tag = messageData.second as String
+            val message = messageData.third as String
+
+            if (permissionManager.shouldLogGenericLog(type, tag, message)) {
+                val payload = GenericLogModel(
+                    threadName = messageData.threadName,
+                    type = type,
+                    tag = tag,
+                    message = message,
+                    data = messageData.fourth as? Map<String, Any?>
+                )
+
                 transmit(
                     type = MADAssistantTransmissionType.GenericLogs,
                     encrypt = permissionManager.shouldEncryptGenericLogs(),
-                    json = data.toJsonObject().toString(0)
+                    json = payload.toJsonObject().toString(0)
                 )
             }
         } catch (ex: Exception) {

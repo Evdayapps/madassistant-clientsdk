@@ -19,6 +19,7 @@ import org.json.JSONObject
  */
 class NetworkCallLogModel {
 
+    var threadName : String? = null
     var connectTimeoutMillis : Int? = null
     var readTimeoutMillis : Int? = null
     var writeTimeoutMillis: Int? = null
@@ -37,6 +38,7 @@ class NetworkCallLogModel {
     var exception : ExceptionModel? = null
 
     companion object {
+        private const val KEY_threadName = "threadName"
         private const val KEY_protocol = "protocol"
         const val KEY_method = "method"
         const val KEY_url = "url"
@@ -63,6 +65,7 @@ class NetworkCallLogModel {
     @Throws(Exception::class)
     constructor(json: String) {
         JSONObject(json).apply {
+            threadName = getString(KEY_threadName)
             protocol = optString(KEY_protocol, null)
             method = optString(KEY_method, null)
             url = optString(KEY_url, null)
@@ -92,6 +95,7 @@ class NetworkCallLogModel {
 
     fun toJsonObject(): JSONObject {
         return JSONObject().apply {
+            put(KEY_threadName, threadName)
             put(KEY_method, method)
             put(KEY_url, url)
 

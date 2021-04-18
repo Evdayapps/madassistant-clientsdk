@@ -62,6 +62,7 @@ class MADAssistantOkHttp3Interceptor(
     ) {
         try {
             val data = NetworkCallLogModel()
+            data.threadName = Thread.currentThread().name
 
             // Base
             data.method = request.method()
@@ -108,7 +109,11 @@ class MADAssistantOkHttp3Interceptor(
 
             // Exception
             exception?.let {
-                data.exception = ExceptionModel(throwable = it, isCrash = false)
+                data.exception = ExceptionModel(
+                    threadName = Thread.currentThread().name,
+                    throwable = it,
+                    isCrash = false
+                )
             }
 
             Log.i("Interceptor", "data: ${data.toJsonObject().toString(4)}")
