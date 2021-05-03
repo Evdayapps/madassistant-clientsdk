@@ -26,7 +26,7 @@ class ConnectionManagerImpl(
 
     companion object {
         const val REPO_SERVICE_PACKAGE = "com.evdayapps.madassistant.repository"
-        const val REPO_SERVICE_CLASS = "$REPO_SERVICE_PACKAGE.service.MADAssistantRepositoryService"
+        const val REPO_SERVICE_CLASS = "$REPO_SERVICE_PACKAGE.service.MADAssistantService"
         const val TAG = "ConnectionManagerImpl"
     }
 
@@ -60,11 +60,12 @@ class ConnectionManagerImpl(
             )
         )
 
-        applicationContext.bindService(
+        val success = applicationContext.bindService(
             intent,
             this,
             Service.BIND_AUTO_CREATE
         )
+        logUtils?.i(TAG, "bindToService: ${if(success) "Successful" else "Failed"}")
     }
 
     override fun unbindService() = applicationContext.unbindService(this)
@@ -80,9 +81,7 @@ class ConnectionManagerImpl(
      * connection has been lost.
      */
     override fun onServiceDisconnected(name: ComponentName?) {
-        if (BuildConfig.DEBUG) {
-            logUtils?.i(TAG, "Service disconnected")
-        }
+        logUtils?.i(TAG, "Service disconnected")
         repositoryServiceAIDL = null
     }
 
@@ -109,10 +108,9 @@ class ConnectionManagerImpl(
         val pkgName = name?.packageName
         if (!pkgName.isNullOrBlank() && (repoKey.isNullOrBlank() || isServiceLegit(pkgName))) {
             repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
-            Thread.sleep(300)
             performHandshake()
         } else {
-            logUtils?.d(TAG, "Connection failed. Suspicious repository")
+            logUtils?.d(TAG, "Connection failed. Invalid repository certificate")
             applicationContext.unbindService(this)
         }
     }

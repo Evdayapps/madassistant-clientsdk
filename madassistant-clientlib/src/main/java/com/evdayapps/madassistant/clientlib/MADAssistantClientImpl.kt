@@ -87,7 +87,7 @@ class MADAssistantClientImpl(
                 logUtils?.d(TAG, "Handshake Failed. Cause: ${response.errorMessage}")
             }
             else -> {
-                logUtils?.d(TAG, "Handshake failed for an unknown reason")
+                logUtils?.d(TAG, "Handshake Failed. Cause: Unknown")
             }
         }
 

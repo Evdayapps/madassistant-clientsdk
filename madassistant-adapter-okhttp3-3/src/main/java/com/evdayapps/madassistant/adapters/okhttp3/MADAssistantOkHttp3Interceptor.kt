@@ -1,6 +1,5 @@
 package com.evdayapps.madassistant.adapters.okhttp3
 
-import android.util.Log
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
@@ -116,9 +115,7 @@ class MADAssistantOkHttp3Interceptor(
                 )
             }
 
-            Log.i("Interceptor", "data: ${data.toJsonObject().toString(4)}")
             client.logNetworkCall(data)
-
         } catch (ex: Exception) {
             logUtils?.e(ex)
         }
@@ -142,11 +139,11 @@ class MADAssistantOkHttp3Interceptor(
         }
     }
 
-    private fun fillResponseBody(response: Response, data : NetworkCallLogModel) {
+    private fun fillResponseBody(response: Response, data: NetworkCallLogModel) {
         data.responseBody = when {
             bodyHasUnknownEncoding(response.headers()) -> "(encoded body omitted)"
             else -> {
-                when(val responseBody = response.body()) {
+                when (val responseBody = response.body()) {
                     null -> "(no response body)"
                     else -> {
                         val source: BufferedSource = responseBody.source()
@@ -154,7 +151,11 @@ class MADAssistantOkHttp3Interceptor(
                         var buffer: Buffer = source.buffer
                         data.responseLength = buffer.size()
 
-                        if ("gzip".equals(response.headers().get("Content-Encoding"), ignoreCase = true)) {
+                        if ("gzip".equals(
+                                response.headers().get("Content-Encoding"),
+                                ignoreCase = true
+                            )
+                        ) {
                             data.gzippedLength = buffer.size()
                             GzipSource(buffer.clone()).use { gzippedResponseBody ->
                                 buffer = Buffer()
