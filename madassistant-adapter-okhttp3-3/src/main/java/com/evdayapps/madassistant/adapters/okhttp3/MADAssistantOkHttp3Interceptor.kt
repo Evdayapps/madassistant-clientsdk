@@ -38,12 +38,12 @@ class MADAssistantOkHttp3Interceptor(
             )
 
             return response
-        } catch (ex: Exception) {
+        } catch (ex: Throwable) {
             logNetworkCall(
                 chain = chain,
                 request = request,
                 requestTimeMillis = requestTimeMillis,
-                exception = ex,
+                throwable = ex,
                 responseTimeMillis = System.currentTimeMillis()
             )
 
@@ -57,7 +57,7 @@ class MADAssistantOkHttp3Interceptor(
         requestTimeMillis: Long,
         response: Response? = null,
         responseTimeMillis: Long,
-        exception: Exception? = null
+        throwable: Throwable? = null
     ) {
         try {
             val data = NetworkCallLogModel()
@@ -107,7 +107,7 @@ class MADAssistantOkHttp3Interceptor(
             }
 
             // Exception
-            exception?.let {
+            throwable?.let {
                 data.exception = ExceptionModel(
                     threadName = Thread.currentThread().name,
                     throwable = it,
@@ -116,7 +116,7 @@ class MADAssistantOkHttp3Interceptor(
             }
 
             client.logNetworkCall(data)
-        } catch (ex: Exception) {
+        } catch (ex: Throwable) {
             logUtils?.e(ex)
         }
     }
