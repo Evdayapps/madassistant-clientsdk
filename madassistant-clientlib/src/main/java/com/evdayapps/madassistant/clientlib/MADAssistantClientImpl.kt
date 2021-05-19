@@ -92,7 +92,7 @@ class MADAssistantClientImpl(
         }
 
         if (!permissionManager.isLoggingEnabled()) {
-            connectionManager.unbindService()
+            disconnect()
         }
 
         return isAssistantEnabled()
@@ -108,6 +108,11 @@ class MADAssistantClientImpl(
     override fun endSession() {
         transmitter.endSession()
         connectionManager.endSession()
+    }
+
+    private fun disconnect() {
+        transmitter.disconnect(-1)
+        connectionManager.unbindService()
     }
     // endregion Session
 

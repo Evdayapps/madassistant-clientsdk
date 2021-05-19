@@ -10,12 +10,14 @@ import android.content.pm.PackageManager
 import android.content.pm.Signature
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.BuildConfig
 import com.evdayapps.madassistant.common.MADAssistantConstants
 import com.evdayapps.madassistant.common.MADAssistantRepositoryAIDL
 import com.evdayapps.madassistant.common.transmission.TransmissionModel
 import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 
 class ConnectionManagerImpl(
     private val applicationContext: Context,
@@ -68,23 +70,6 @@ class ConnectionManagerImpl(
         logUtils?.i(TAG, "bindToService: ${if(success) "Successful" else "Failed"}")
     }
 
-    override fun unbindService() = applicationContext.unbindService(this)
-
-    /**
-     * Called when a connection to the Service has been lost.  This typically
-     * happens when the process hosting the service has crashed or been killed.
-     * This does *not* remove the ServiceConnection itself -- this
-     * binding to the service will remain active, and you will receive a call
-     * to [.onServiceConnected] when the Service is next running.
-     *
-     * @param name The concrete component name of the service whose
-     * connection has been lost.
-     */
-    override fun onServiceDisconnected(name: ComponentName?) {
-        logUtils?.i(TAG, "Service disconnected")
-        repositoryServiceAIDL = null
-    }
-
     /**
      * Called when a connection to the Service has been established, with
      * the [android.os.IBinder] of the communication channel to the
@@ -106,7 +91,7 @@ class ConnectionManagerImpl(
         logUtils?.i(TAG, "Service connected")
 
         val pkgName = name?.packageName
-        if (!pkgName.isNullOrBlank() && (repoKey.isNullOrBlank() || isServiceLegit(pkgName))) {
+        if (!pkgName.isNullOrBlank() && (repoKey.isBlank() || isServiceLegit(pkgName))) {
             repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
             performHandshake()
         } else {
@@ -115,6 +100,33 @@ class ConnectionManagerImpl(
         }
     }
 
+    override fun disconnect(reason: Int) {
+        repositoryServiceAIDL?.disconnect(reason)
+    }
+
+    override fun unbindService() = applicationContext.unbindService(this)
+
+    /**
+     * Called when a connection to the Service has been lost.  This typically
+     * happens when the process hosting the service has crashed or been killed.
+     * This does *not* remove the ServiceConnection itself -- this
+     * binding to the service will remain active, and you will receive a call
+     * to [.onServiceConnected] when the Service is next running.
+     *
+     * @param name The concrete component name of the service whose
+     * connection has been lost.
+     */
+    override fun onServiceDisconnected(name: ComponentName?) {
+        logUtils?.i(TAG, "Service disconnected")
+        repositoryServiceAIDL = null
+    }
+
+    /**
+     * Verify that the certificate signature for the repository is legit
+     *
+     * This is to avoid an MITM attack where another app could be used to intercept logs
+     * meant for MADAssistant Repository only
+     */
     private fun isServiceLegit(packageName: String): Boolean {
         val pkgInfo = applicationContext.packageManager.getPackageInfo(
             packageName,
@@ -163,6 +175,7 @@ class ConnectionManagerImpl(
     override fun startSession(): Long {
         logUtils?.i(TAG, "Starting new session")
         val sessionId: Long = repositoryServiceAIDL?.startSession()!!
+        repositoryServiceAIDL?.updateChangelog(false, sessionId)
         logUtils?.i(TAG, "Started new session $sessionId")
         return sessionId
     }

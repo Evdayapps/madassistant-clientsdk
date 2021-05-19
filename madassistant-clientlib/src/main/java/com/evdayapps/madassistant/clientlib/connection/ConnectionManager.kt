@@ -4,7 +4,7 @@ import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel
 import com.evdayapps.madassistant.common.transmission.TransmissionModel
 
 /**
- * Encapsulates logic to connect with the repository for the client
+ * Encapsulates logic to connect with and transmit final payload to the repository
  */
 interface ConnectionManager {
 
@@ -28,6 +28,11 @@ interface ConnectionManager {
      * Attempt a connection to the repository service
      */
     fun bindToService()
+
+    /**
+     * Inform the repository that the client wishes to disconnect for [reason]
+     */
+    fun disconnect(reason: Int)
 
     /**
      * Unbind from the currently connected service

@@ -19,5 +19,16 @@ interface MADAssistantRepositoryAIDL {
 
     void endSession();
 
+    /**
+    * Used by the client to inform the repository that it is about to disonnect
+    * Also states the cause via [reason] so that the repository can handle it accordingly
+    */
+    void disconnect(int reason);
+
+    /**
+    * Informs the repository that it should attempt to update the application changelog
+    **/
+    void updateChangelog(boolean encrypted, long timestamp);
+
     void log(in TransmissionModel data);
 }

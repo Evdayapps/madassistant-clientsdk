@@ -15,6 +15,13 @@ interface TransmissionManager {
      */
     fun endSession()
 
+    /**
+     * Notify the MADAssistant repository service that the client is disconnecting
+     * This would be used by the repository to trigger the appropriate notification to open
+     * settings
+     */
+    fun disconnect(reason: Int)
+
     fun logNetworkCall(data: NetworkCallLogModel)
 
     fun logCrashReport(throwable: Throwable)

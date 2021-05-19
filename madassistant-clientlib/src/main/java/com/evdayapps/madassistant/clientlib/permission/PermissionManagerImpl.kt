@@ -59,42 +59,42 @@ class PermissionManagerImpl(
                 val flags = Pattern.MULTILINE and Pattern.CASE_INSENSITIVE
                 patternNetworkCallMethod =
                     permissions.networkCalls.filterMethod
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternNetworkCallUrl =
                     permissions.networkCalls.filterUrl
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternAnalyticsDestination =
                     permissions.analytics.filterDestination
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternAnalyticsName =
                     permissions.analytics.filterEventName
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternAnalyticsParams =
                     permissions.analytics.filterParamData
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternGenericLogsTag =
                     permissions.genericLogs.filterTag
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternGenericLogsMessage =
                     permissions.genericLogs.filterMessage
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternExceptionsType =
                     permissions.exceptions.filterType
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternExceptionsMessage =
                     permissions.exceptions.filterMessage
-                        ?.takeIf { !it.isNullOrBlank() }
+                        ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
             } catch (ex: JSONException) {

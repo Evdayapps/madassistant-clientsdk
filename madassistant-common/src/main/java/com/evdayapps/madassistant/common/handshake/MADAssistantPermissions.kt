@@ -66,6 +66,11 @@ data class MADAssistantPermissions(
     }
 
     fun toJsonObject(): JSONObject {
+        networkCalls.enabled = networkCalls.share || networkCalls.read
+        analytics.enabled = analytics.share || analytics.read
+        exceptions.enabled = exceptions.share || exceptions.read
+        genericLogs.enabled = genericLogs.share || genericLogs.read
+
         return JSONObject().apply {
             put(KEY_deviceId, deviceId)
 

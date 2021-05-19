@@ -75,6 +75,10 @@ class TransmissionManagerImpl(
         this.sessionId = sessionId
     }
 
+    override fun disconnect(reason: Int) {
+        connectionManager.disconnect(reason)
+    }
+
     override fun endSession() {
         this.sessionId = null
     }
@@ -128,9 +132,10 @@ class TransmissionManagerImpl(
         return list
     }
 
-    private fun transmit(json: String, type: Int, encrypt: Boolean) {
+    private fun transmit(json: String, type: Int, timestamp: Long, encrypt: Boolean) {
         val transmitJson = if (encrypt) cipher.encrypt(json) else json
         jsonToSegments(transmitJson, type, encrypt).forEach {
+            it.timestamp = timestamp
             logUtils?.i(
                 TAG,
                 "transmit: thread: ${Thread.currentThread().name} type: $type, enc: $encrypt json: $json"
@@ -167,6 +172,7 @@ class TransmissionManagerImpl(
                 transmit(
                     json = json,
                     type = MADAssistantTransmissionType.NetworkCall,
+                    timestamp = data.timestamp,
                     encrypt = permissionManager.shouldEncryptApiLog()
                 )
             }
@@ -178,14 +184,14 @@ class TransmissionManagerImpl(
 
     // region Logging: Crash Reports
     override fun logCrashReport(throwable: Throwable) {
-        _processException(throwable, true)
+        _internalLogException(throwable, true)
     }
 
     override fun logException(throwable: Throwable) {
-        _processException(throwable, false)
+        _internalLogException(throwable, false)
     }
 
-    private fun _processException(throwable: Throwable, crashReport : Boolean) {
+    private fun _internalLogException(throwable: Throwable, crashReport : Boolean) {
         try {
             _clientHandler.sendMessage(
                 _clientHandler.obtainMessage(
@@ -216,6 +222,7 @@ class TransmissionManagerImpl(
                 transmit(
                     json = json,
                     type = MADAssistantTransmissionType.Exception,
+                    timestamp = messageData.timestamp,
                     encrypt = permissionManager.shouldEncryptCrashReports()
                 )
             }
@@ -257,6 +264,7 @@ class TransmissionManagerImpl(
                 transmit(
                     type = MADAssistantTransmissionType.Analytics,
                     encrypt = permissionManager.shouldEncryptAnalytics(),
+                    timestamp = messageData.timestamp,
                     json = AnalyticsEventModel(
                         threadName = messageData.threadName,
                         destination = destination,
@@ -314,6 +322,7 @@ class TransmissionManagerImpl(
                 transmit(
                     type = MADAssistantTransmissionType.GenericLogs,
                     encrypt = permissionManager.shouldEncryptGenericLogs(),
+                    timestamp = messageData.timestamp,
                     json = payload.toJsonObject().toString(0)
                 )
             }
