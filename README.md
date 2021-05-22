@@ -68,6 +68,36 @@ Filters:
 - **Event Name** - (Regex) Name of the event
 - **Parameters** - (Regex) The parameters, as a json string
 
+### Exceptions and Crashes
+Crashes can be auto logged by calling the connectExceptionHandler method
+Properties:
+- **Thread Name** - The name of the thread on which it occured
+- **Type** - The type of the exception
+- **Message** - An optional message that can be provided
+- **Stacktrace** - The stack trace for the exception/crash, with causes
+
+Filters:
+- **Type** - (Regex) 
+- **Message** - (Regex) 
+
+### Generic Logs
+Can be used for general logging.  
+Supports all log types as per android.utils.Log
+
+Properties:
+- **Type** - The type of the log, matching android.utils.Log
+- **Tag** - Tag, similar to the tag in Log.i(..), Log.d(..), etc
+- **Message**- The message to log
+- **Data** - An optional map of String to Any for logging any additional information required
+
+Filters:
+- **Type** - Set of options on what type of logs to allow (Debug, Info, Verbose, Warning, Error)
+- **Tag** - (Regex)
+- **Message** - (Regex)
+
+
+
+
 
 
 
