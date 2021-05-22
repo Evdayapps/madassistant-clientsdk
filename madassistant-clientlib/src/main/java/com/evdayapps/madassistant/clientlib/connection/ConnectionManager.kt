@@ -14,9 +14,8 @@ interface ConnectionManager {
          * It then returns the response, if successful, to the client class
          *
          * @param response The handshake response model, null if failed
-         * @return true if the authToken is valid, false otherwise
          */
-        fun handleHandshakeResponse(response: HandshakeResponseModel?) : Boolean
+        fun onHandshakeResponse(response: HandshakeResponseModel?)
     }
 
     /**

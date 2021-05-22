@@ -15,15 +15,22 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
  * An implementation of [MADAssistantClient]
- * @param applicationContext The application context
- * @param passphrase The encryption passphrase for the client
- * @param
+ * @param applicationContext [required] The application context
+ * @param passphrase [required] The encryption passphrase for the client
+ * @param logUtils [optional] Instance of [LogUtils]
+ * @param repositorySignature [optional] The SHA-256 signature of the MADAssistant repository
+ *                            to prevent MITM attacks where a third party could impersonate the
+ *                            repository's application Id
+ * @param cipher [optional] An instance of the cipher. Auto created, if not provided
+ * @param connectionManager [optional] An instance of [ConnectionManager]. Autocreated if not provided
+ * @param permissionManager [optional] An instance of [PermissionManager]. Autocreated if not provided
+ * @param transmitter [optional] An instance of [TransmissionManager]. Autocreated if not provided
  */
 class MADAssistantClientImpl(
     private val applicationContext: Context,
     private val passphrase : String,
     private val logUtils: LogUtils? = null,
-    private val repoKey : String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
+    private val repositorySignature : String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
             "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63",
     private val cipher : MADAssistantCipher = MADAssistantCipherImpl(
         passPhrase = passphrase,
@@ -31,7 +38,7 @@ class MADAssistantClientImpl(
     private val connectionManager: ConnectionManager = ConnectionManagerImpl(
         applicationContext = applicationContext,
         logUtils = logUtils,
-        repoKey = repoKey
+        repositorySignature = repositorySignature
     ),
     private val permissionManager: PermissionManager = PermissionManagerImpl(
         cipher = cipher,
@@ -72,7 +79,7 @@ class MADAssistantClientImpl(
 
     override fun unbindService() = connectionManager.unbindService()
 
-    override fun handleHandshakeResponse(response: HandshakeResponseModel?): Boolean {
+    override fun onHandshakeResponse(response: HandshakeResponseModel?) {
         when {
             response?.successful == true -> {
                 val error = permissionManager.setAuthToken(response.authToken)
@@ -94,8 +101,6 @@ class MADAssistantClientImpl(
         if (!permissionManager.isLoggingEnabled()) {
             disconnect()
         }
-
-        return isAssistantEnabled()
     }
     // endregion Connection
 

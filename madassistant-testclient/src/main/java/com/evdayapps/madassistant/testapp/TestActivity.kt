@@ -47,7 +47,7 @@ class TestActivity : AppCompatActivity() {
             applicationContext = applicationContext,
             connectionManager = ConnectionManagerImpl(
                 applicationContext = applicationContext,
-                repoKey = "",
+                repositorySignature = "",
                 logUtils = logUtils
             ),
             passphrase = "test",

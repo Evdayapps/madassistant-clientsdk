@@ -6,23 +6,20 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.content.pm.PackageManager
-import android.content.pm.Signature
-import android.os.Build
 import android.os.IBinder
-import android.util.Log
+import com.evdayapps.madassistant.clientlib.connection.utils.ConnectionManagerUtils
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.BuildConfig
+import com.evdayapps.madassistant.common.MADAssistantClientAIDL
 import com.evdayapps.madassistant.common.MADAssistantConstants
 import com.evdayapps.madassistant.common.MADAssistantRepositoryAIDL
+import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel
 import com.evdayapps.madassistant.common.transmission.TransmissionModel
-import java.security.MessageDigest
-import java.util.concurrent.TimeUnit
 
 class ConnectionManagerImpl(
     private val applicationContext: Context,
     private val logUtils: LogUtils? = null,
-    private val repoKey : String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
+    private val repositorySignature : String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
             "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
 ) : ConnectionManager, ServiceConnection {
 
@@ -32,8 +29,13 @@ class ConnectionManagerImpl(
         const val TAG = "ConnectionManagerImpl"
     }
 
-    private var repositoryServiceAIDL: MADAssistantRepositoryAIDL? = null
     private var callback: ConnectionManager.Callback? = null
+    private var repositoryServiceAIDL: MADAssistantRepositoryAIDL? = null
+    private val clientAIDL : MADAssistantClientAIDL = object : MADAssistantClientAIDL.Stub() {
+        override fun returnHandshake(data: HandshakeResponseModel?) {
+            callback?.onHandshakeResponse(data)
+        }
+    }
 
     override fun setCallback(callback: ConnectionManager.Callback) {
         this.callback = callback
@@ -67,7 +69,7 @@ class ConnectionManagerImpl(
             this,
             Service.BIND_AUTO_CREATE
         )
-        logUtils?.i(TAG, "bindToService: ${if(success) "Successful" else "Failed"}")
+        logUtils?.i(TAG, "bindToService: Successful? $success")
     }
 
     /**
@@ -91,12 +93,18 @@ class ConnectionManagerImpl(
         logUtils?.i(TAG, "Service connected")
 
         val pkgName = name?.packageName
-        if (!pkgName.isNullOrBlank() && (repoKey.isBlank() || isServiceLegit(pkgName))) {
+        if(pkgName.isNullOrBlank()) {
+            logUtils?.d(TAG, "Connection Rejected (Invalid package name)")
+            unbindService()
+        } else if(
+            repositorySignature.isBlank() ||
+            ConnectionManagerUtils.isServiceLegit(applicationContext, repositorySignature, pkgName)
+        ) {
             repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
-            performHandshake()
+            initHandshake()
         } else {
-            logUtils?.d(TAG, "Connection failed. Invalid repository certificate")
-            applicationContext.unbindService(this)
+            logUtils?.d(TAG, "Connection Rejected (Invalid package signature)")
+            unbindService()
         }
     }
 
@@ -122,35 +130,6 @@ class ConnectionManagerImpl(
     }
 
     /**
-     * Verify that the certificate signature for the repository is legit
-     *
-     * This is to avoid an MITM attack where another app could be used to intercept logs
-     * meant for MADAssistant Repository only
-     */
-    private fun isServiceLegit(packageName: String): Boolean {
-        val pkgInfo = applicationContext.packageManager.getPackageInfo(
-            packageName,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                PackageManager.GET_SIGNING_CERTIFICATES
-            } else {
-                PackageManager.GET_SIGNATURES
-            }
-        )
-
-        val signatures = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            pkgInfo.signatures
-        } else if (pkgInfo.signingInfo.hasMultipleSigners()) {
-            pkgInfo.signingInfo.apkContentsSigners
-        } else {
-            pkgInfo.signingInfo.signingCertificateHistory
-        }
-
-        return signatures.any {
-            getSig(it, "SHA256").equals(repoKey, ignoreCase = true)
-        }
-    }
-
-    /**
      * Returns whether this client is currently bound to a logging service or not
      * @return true if bound, else false
      */
@@ -159,24 +138,28 @@ class ConnectionManagerImpl(
     /**
      * Performs the handshake with the repository
      */
-    private fun performHandshake() {
+    private fun initHandshake() {
         try {
-            val response = repositoryServiceAIDL?.performHandshake(
-                MADAssistantConstants.LibraryVersion
+            logUtils?.i(TAG, "initialising handshake...")
+            repositoryServiceAIDL?.initiateHandshake(
+                MADAssistantConstants.LibraryVersion,
+                clientAIDL
             )
-            callback?.handleHandshakeResponse(response)
         } catch (ex: Exception) {
             logUtils?.e(ex)
-            callback?.handleHandshakeResponse(null)
+            callback?.onHandshakeResponse(null)
         }
     }
 
     // region Session Management
     override fun startSession(): Long {
         logUtils?.i(TAG, "Starting new session")
+
         val sessionId: Long = repositoryServiceAIDL?.startSession()!!
         repositoryServiceAIDL?.updateChangelog(false, sessionId)
+
         logUtils?.i(TAG, "Started new session $sessionId")
+
         return sessionId
     }
 
@@ -200,26 +183,4 @@ class ConnectionManagerImpl(
         }
     }
     // endregion Logging
-
-    // region Utils
-    private fun getSig(signature: Signature, key: String): String {
-        try {
-            val md = MessageDigest.getInstance(key)
-            md.update(signature.toByteArray())
-            val digest = md.digest()
-            val toRet = StringBuilder()
-            for (i in digest.indices) {
-                if (i != 0) toRet.append(":")
-                val b = digest[i].toInt() and 0xff
-                val hex = Integer.toHexString(b)
-                if (hex.length == 1) toRet.append("0")
-                toRet.append(hex)
-            }
-
-            return toRet.toString()
-        } catch (ex: Exception) {
-            return "Failed"
-        }
-    }
-    // endregion Utils
 }

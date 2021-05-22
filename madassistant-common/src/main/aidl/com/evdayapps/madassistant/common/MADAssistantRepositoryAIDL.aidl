@@ -4,16 +4,17 @@ package com.evdayapps.madassistant.common;
 // Declare any non-default types here with import statements
 import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel;
 import com.evdayapps.madassistant.common.transmission.TransmissionModel;
+import com.evdayapps.madassistant.common.MADAssistantClientAIDL;
 
 interface MADAssistantRepositoryAIDL {
+
     /**
-     * Connect to this service
+     * Initiate the async handshake process
      *
-     * @return A string (shared by the developer to the user) that is a string representation of
-     * the user's rights, encrypted with the appropriate passphrase and key. This is processed by
-     * the library in the client app and deemed worthy or not
+     * @param sdkVersion The version of the common sdk
+     * @param clientAIDL An instance of MADAssistantClientAIDL to enable return communications
      */
-    HandshakeResponseModel performHandshake(int sdkVersion);
+    void initiateHandshake(int sdkVersion, in MADAssistantClientAIDL clientAIDL);
 
     long startSession();
 
