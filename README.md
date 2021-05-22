@@ -1,4 +1,5 @@
 # MADAssistant-Library
+Mobile Android Debugging Assistant  
 Common components for the client library and repository
 
 
