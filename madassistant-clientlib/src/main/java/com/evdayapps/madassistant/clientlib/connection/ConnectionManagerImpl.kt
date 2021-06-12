@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import com.evdayapps.madassistant.clientlib.connection.utils.ConnectionManagerUtils
+import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.BuildConfig
 import com.evdayapps.madassistant.common.MADAssistantClientAIDL
@@ -31,9 +32,10 @@ class ConnectionManagerImpl(
 
     private var callback: ConnectionManager.Callback? = null
     private var repositoryServiceAIDL: MADAssistantRepositoryAIDL? = null
+
     private val clientAIDL : MADAssistantClientAIDL = object : MADAssistantClientAIDL.Stub() {
-        override fun returnHandshake(data: HandshakeResponseModel?) {
-            callback?.onHandshakeResponse(data)
+        override fun onHandshakeResponse(data: HandshakeResponseModel?) {
+            callback?.validateHandshakeReponse(data)
         }
     }
 
@@ -47,10 +49,11 @@ class ConnectionManagerImpl(
     override fun bindToService() {
         if (BuildConfig.DEBUG) {
             logUtils?.i(
-                TAG, "Attempting binding to service $REPO_SERVICE_CLASS " +
-                        "in package $REPO_SERVICE_PACKAGE"
+                TAG, "bindToService: $REPO_SERVICE_CLASS package: $REPO_SERVICE_PACKAGE"
             )
         }
+
+        callback?.onStateChanged(ConnectionState.Connecting)
 
         val intent = Intent()
         intent.setClassName(REPO_SERVICE_PACKAGE, REPO_SERVICE_CLASS)
@@ -69,6 +72,7 @@ class ConnectionManagerImpl(
             this,
             Service.BIND_AUTO_CREATE
         )
+
         logUtils?.i(TAG, "bindToService: Successful? $success")
     }
 
@@ -93,17 +97,23 @@ class ConnectionManagerImpl(
         logUtils?.i(TAG, "Service connected")
 
         val pkgName = name?.packageName
-        if(pkgName.isNullOrBlank()) {
-            logUtils?.d(TAG, "Connection Rejected (Invalid package name)")
-            unbindService()
-        } else if(
-            repositorySignature.isBlank() ||
-            ConnectionManagerUtils.isServiceLegit(applicationContext, repositorySignature, pkgName)
-        ) {
+        val errorMessage : String? = when {
+            pkgName.isNullOrBlank() -> "Invalid package name"
+
+            repositorySignature.isNotBlank() && !
+            ConnectionManagerUtils.isServiceLegit(
+                applicationContext, repositorySignature, pkgName
+            ) -> "Invalid repository signature"
+
+            else -> null
+        }
+
+        if(errorMessage == null) {
+            logUtils?.i(TAG, "Repository valid. Initiating handshake..")
             repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
             initHandshake()
         } else {
-            logUtils?.d(TAG, "Connection Rejected (Invalid package signature)")
+            logUtils?.i(TAG, "Repository invalid. Disconnecting.")
             unbindService()
         }
     }
@@ -112,7 +122,10 @@ class ConnectionManagerImpl(
         repositoryServiceAIDL?.disconnect(reason)
     }
 
-    override fun unbindService() = applicationContext.unbindService(this)
+    override fun unbindService() {
+        callback?.onStateChanged(ConnectionState.Disconnected)
+        applicationContext.unbindService(this)
+    }
 
     /**
      * Called when a connection to the Service has been lost.  This typically
@@ -127,13 +140,8 @@ class ConnectionManagerImpl(
     override fun onServiceDisconnected(name: ComponentName?) {
         logUtils?.i(TAG, "Service disconnected")
         repositoryServiceAIDL = null
+        callback?.onStateChanged(ConnectionState.Disconnected)
     }
-
-    /**
-     * Returns whether this client is currently bound to a logging service or not
-     * @return true if bound, else false
-     */
-    override fun isBound(): Boolean = repositoryServiceAIDL != null
 
     /**
      * Performs the handshake with the repository
@@ -147,7 +155,7 @@ class ConnectionManagerImpl(
             )
         } catch (ex: Exception) {
             logUtils?.e(ex)
-            callback?.onHandshakeResponse(null)
+            callback?.validateHandshakeReponse(null)
         }
     }
 

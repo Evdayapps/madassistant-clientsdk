@@ -12,5 +12,5 @@ interface MADAssistantClientAIDL {
      *
      * @param HandshakeResponseModel
      */
-    void returnHandshake(in HandshakeResponseModel data);
+    void onHandshakeResponse(in HandshakeResponseModel data);
 }

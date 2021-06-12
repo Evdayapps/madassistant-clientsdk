@@ -1,8 +1,15 @@
 package com.evdayapps.madassistant.clientlib.transmission
 
+import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 interface TransmissionManager {
+
+    /**
+     * Method to inform the transmitter of the current state of the connection
+     * Used by the transmitter to
+     */
+    fun setState(state: ConnectionState)
 
     /**
      * Initiates a new session

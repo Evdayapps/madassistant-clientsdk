@@ -1,5 +1,6 @@
 package com.evdayapps.madassistant.clientlib.connection
 
+import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel
 import com.evdayapps.madassistant.common.transmission.TransmissionModel
 
@@ -9,13 +10,16 @@ import com.evdayapps.madassistant.common.transmission.TransmissionModel
 interface ConnectionManager {
 
     interface Callback {
+
+        fun onStateChanged(state: ConnectionState)
+
         /**
          * The connection manager performs all the actions for the handshake with the repository
          * It then returns the response, if successful, to the client class
          *
          * @param response The handshake response model, null if failed
          */
-        fun onHandshakeResponse(response: HandshakeResponseModel?)
+        fun validateHandshakeReponse(response: HandshakeResponseModel?)
     }
 
     /**
@@ -37,12 +41,6 @@ interface ConnectionManager {
      * Unbind from the currently connected service
      */
     fun unbindService()
-
-    /**
-     * Returns whether this client is currently bound to a logging service or not
-     * @return true if bound, else false
-     */
-    fun isBound() : Boolean
 
     // region Session Management
     /**

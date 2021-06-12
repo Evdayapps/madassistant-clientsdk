@@ -3,6 +3,7 @@ package com.evdayapps.madassistant.clientlib
 import android.content.Context
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
+import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionManager
@@ -28,11 +29,11 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  */
 class MADAssistantClientImpl(
     private val applicationContext: Context,
-    private val passphrase : String,
+    private val passphrase: String,
     private val logUtils: LogUtils? = null,
-    private val repositorySignature : String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
+    private val repositorySignature: String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
             "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63",
-    private val cipher : MADAssistantCipher = MADAssistantCipherImpl(
+    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(
         passPhrase = passphrase,
     ),
     private val connectionManager: ConnectionManager = ConnectionManagerImpl(
@@ -56,22 +57,26 @@ class MADAssistantClientImpl(
         private const val TAG = "MADAssistantClientImpl"
     }
 
-    private var exceptionHandler: Thread.UncaughtExceptionHandler? = null
-
     init {
         connectionManager.setCallback(this)
     }
 
-    override fun connectExceptionHandler() {
+    private var exceptionHandler: Thread.UncaughtExceptionHandler? = null
+
+    override fun logCrashes() {
         if (exceptionHandler == null) {
             val def = Thread.getDefaultUncaughtExceptionHandler()
-            exceptionHandler = Thread.UncaughtExceptionHandler { p0, p1 ->
-                logCrashReport(p1)
-                def?.uncaughtException(p0, p1)
+            exceptionHandler = Thread.UncaughtExceptionHandler { thread, throwable ->
+                logCrashReport(throwable)
+                def?.uncaughtException(thread, throwable)
             }
 
             Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
         }
+    }
+
+    override fun onStateChanged(state: ConnectionState) {
+        transmitter.setState(state)
     }
 
     // region Connection
@@ -79,27 +84,20 @@ class MADAssistantClientImpl(
 
     override fun unbindService() = connectionManager.unbindService()
 
-    override fun onHandshakeResponse(response: HandshakeResponseModel?) {
-        when {
-            response?.successful == true -> {
-                val error = permissionManager.setAuthToken(response.authToken)
-                if(error.isNullOrBlank()) {
-                    logUtils?.i(TAG, "Handshake successful")
-                    startSession()
-                } else {
-                    logUtils?.d(TAG, "Handshake failed. Cause: $error")
-                }
-            }
-            response?.errorMessage?.isNotBlank() == true -> {
-                logUtils?.d(TAG, "Handshake Failed. Cause: ${response.errorMessage}")
-            }
-            else -> {
-                logUtils?.d(TAG, "Handshake Failed. Cause: Unknown")
-            }
+    override fun validateHandshakeReponse(response: HandshakeResponseModel?) {
+        val errorMessage: String? = when {
+            response?.successful == true -> permissionManager.setAuthToken(response.authToken)
+            response?.errorMessage?.isNotBlank() == true -> response.errorMessage
+            else -> "Unknown"
         }
 
-        if (!permissionManager.isLoggingEnabled()) {
+        if (errorMessage == null) {
+            startSession()
+            onStateChanged(ConnectionState.Connected)
+        } else {
+            logUtils?.i(TAG, "Handshake failed. Reason: $errorMessage")
             disconnect()
+            onStateChanged(ConnectionState.Disconnected)
         }
     }
     // endregion Connection
@@ -134,8 +132,12 @@ class MADAssistantClientImpl(
         data: Map<String, Any?>
     ) = transmitter.logAnalyticsEvent(destination, eventName, data)
 
-    override fun logGenericLog(type: Int, tag: String, message: String, data: Map<String, Any?>?) =
-        transmitter.logGenericLog(type, tag, message, data)
+    override fun logGenericLog(
+        type: Int,
+        tag: String,
+        message: String,
+        data: Map<String, Any?>?
+    ) = transmitter.logGenericLog(type, tag, message, data)
 
     override fun logException(throwable: Throwable) =
         transmitter.logException(throwable)

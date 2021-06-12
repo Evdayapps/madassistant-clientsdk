@@ -57,7 +57,7 @@ class TestActivity : AppCompatActivity() {
         // Bind the client to the remote service
         madAssistantClient.bindToService()
 
-        madAssistantClient.connectExceptionHandler()
+        madAssistantClient.logCrashes()
     }
 
     fun testApiCall(view: View) {
@@ -116,7 +116,8 @@ class TestActivity : AppCompatActivity() {
 
     fun testNonFatalException(view: View) {
         try {
-            "fsdfsa".toInt()
+            val nullString: String = ""
+            println(nullString[4])
         } catch (ex: Exception) {
             madAssistantClient.logException(ex)
         }

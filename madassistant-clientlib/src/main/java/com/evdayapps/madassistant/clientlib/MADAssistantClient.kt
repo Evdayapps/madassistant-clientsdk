@@ -33,7 +33,7 @@ interface MADAssistantClient {
      *
      * This is required if you wish to log app crashes
      */
-    fun connectExceptionHandler()
+    fun logCrashes()
 
     /**
      * Helper method to start a new session
@@ -65,7 +65,7 @@ interface MADAssistantClient {
     /**
      * Log a crash report in the system
      *
-     * This is an alternate method to [connectExceptionHandler]. You can setup your own crash
+     * This is an alternate method to [logCrashes]. You can setup your own crash
      * handler and call this method to log the cause of the crash
      *
      * @param throwable The cause of the crash

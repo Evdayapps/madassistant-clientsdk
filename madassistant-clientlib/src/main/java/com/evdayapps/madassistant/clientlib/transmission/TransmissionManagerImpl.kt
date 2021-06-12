@@ -2,7 +2,9 @@ package com.evdayapps.madassistant.clientlib.transmission
 
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Message
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
+import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
@@ -27,6 +29,7 @@ class TransmissionManagerImpl(
 
     private val TAG = "TransmissionSenderImpl"
 
+    private var state : ConnectionState = ConnectionState.None
     private var sessionId: Long? = null
 
     private var _clientThreadHandler: HandlerThread =
@@ -36,30 +39,40 @@ class TransmissionManagerImpl(
 
     private var _clientHandler: Handler
     private val _handlerCallback = Handler.Callback { msg ->
-        when (msg.what) {
-            MADAssistantTransmissionType.NetworkCall -> {
-                (msg.obj as? MessageData)?.let {
-                    _processNetworkCall(it)
+        when (state) {
+            ConnectionState.Connected -> {
+                when (msg.what) {
+                    MADAssistantTransmissionType.NetworkCall -> {
+                        (msg.obj as? MessageData)?.let {
+                            _processNetworkCall(it)
+                        }
+                    }
+
+                    MADAssistantTransmissionType.Analytics -> {
+                        (msg.obj as? MessageData)?.let {
+                            _processAnalyticsEvent(it)
+                        }
+                    }
+
+                    MADAssistantTransmissionType.Exception -> {
+                        (msg.obj as? MessageData)?.let {
+                            _processException(it)
+                        }
+                    }
+
+                    MADAssistantTransmissionType.GenericLogs -> {
+                        (msg.obj as? MessageData)?.let {
+                            _processGenericLog(it)
+                        }
+                    }
                 }
             }
 
-            MADAssistantTransmissionType.Analytics -> {
-                (msg.obj as? MessageData)?.let {
-                    _processAnalyticsEvent(it)
-                }
+            ConnectionState.Disconnected -> {
+                // Nothing to do here. Drop the message
             }
 
-            MADAssistantTransmissionType.Exception -> {
-                (msg.obj as? MessageData)?.let {
-                    _processException(it)
-                }
-            }
-
-            MADAssistantTransmissionType.GenericLogs -> {
-                (msg.obj as? MessageData)?.let {
-                    _processGenericLog(it)
-                }
-            }
+            else -> requeueMessage(msg)
         }
 
         true
@@ -69,6 +82,18 @@ class TransmissionManagerImpl(
         _clientHandler = Handler(_clientThreadHandler.looper, _handlerCallback)
     }
 
+    /**
+     * Since the system is not yet ready to send the message (and not disconnected)
+     * Queue the message again so its sent when the system is ready
+     */
+    private fun requeueMessage(message: Message) {
+        _clientHandler.sendMessage(message)
+    }
+
+    override fun setState(state: ConnectionState) {
+        this.state = state
+    }
+    // endregion State
 
     // region Session Management
     override fun startSession(sessionId: Long) {
@@ -147,20 +172,21 @@ class TransmissionManagerImpl(
 
     // region Logging: Network
     override fun logNetworkCall(data: NetworkCallLogModel) {
-        try {
-            _clientHandler.sendMessage(
-                _clientHandler.obtainMessage(
-                    MADAssistantTransmissionType.NetworkCall,
-                    MessageData(
-                        threadName = Thread.currentThread().name,
-                        first = data
+        if(state != ConnectionState.Disconnected) {
+            try {
+                _clientHandler.sendMessage(
+                    _clientHandler.obtainMessage(
+                        MADAssistantTransmissionType.NetworkCall,
+                        MessageData(
+                            threadName = Thread.currentThread().name,
+                            first = data
+                        )
                     )
                 )
-            )
-        } catch (ex: Exception) {
-            logUtils?.e(ex)
+            } catch (ex: Exception) {
+                logUtils?.e(ex)
+            }
         }
-
     }
 
     private fun _processNetworkCall(data: MessageData) {
@@ -184,7 +210,13 @@ class TransmissionManagerImpl(
 
     // region Logging: Crash Reports
     override fun logCrashReport(throwable: Throwable) {
-        _internalLogException(throwable, true)
+        _processException(
+            MessageData(
+                threadName = Thread.currentThread().name,
+                first = throwable,
+                second = true
+            )
+        )
     }
 
     override fun logException(throwable: Throwable) {
@@ -192,19 +224,21 @@ class TransmissionManagerImpl(
     }
 
     private fun _internalLogException(throwable: Throwable, crashReport : Boolean) {
-        try {
-            _clientHandler.sendMessage(
-                _clientHandler.obtainMessage(
-                    MADAssistantTransmissionType.Exception,
-                    MessageData(
-                        threadName = Thread.currentThread().name,
-                        first = throwable,
-                        second = crashReport
+        if(state != ConnectionState.Disconnected) {
+            try {
+                _clientHandler.sendMessage(
+                    _clientHandler.obtainMessage(
+                        MADAssistantTransmissionType.Exception,
+                        MessageData(
+                            threadName = Thread.currentThread().name,
+                            first = throwable,
+                            second = crashReport
+                        )
                     )
                 )
-            )
-        } catch (ex: Exception) {
-            logUtils?.e(ex)
+            } catch (ex: Exception) {
+                logUtils?.e(ex)
+            }
         }
     }
 
@@ -238,20 +272,22 @@ class TransmissionManagerImpl(
         eventName: String,
         data: Map<String, Any?>
     ) {
-        try {
-            _clientHandler.sendMessage(
-                _clientHandler.obtainMessage(
-                    MADAssistantTransmissionType.Analytics,
-                    MessageData(
-                        threadName = Thread.currentThread().name,
-                        first = destination,
-                        second = eventName,
-                        third = data
+        if(state != ConnectionState.Disconnected) {
+            try {
+                _clientHandler.sendMessage(
+                    _clientHandler.obtainMessage(
+                        MADAssistantTransmissionType.Analytics,
+                        MessageData(
+                            threadName = Thread.currentThread().name,
+                            first = destination,
+                            second = eventName,
+                            third = data
+                        )
                     )
                 )
-            )
-        } catch (ex: Exception) {
-            logUtils?.e(ex)
+            } catch (ex: Exception) {
+                logUtils?.e(ex)
+            }
         }
     }
 
@@ -286,21 +322,23 @@ class TransmissionManagerImpl(
         message: String,
         data: Map<String, Any?>?
     ) {
-        try {
-            _clientHandler.sendMessage(
-                _clientHandler.obtainMessage(
-                    MADAssistantTransmissionType.GenericLogs,
-                    MessageData(
-                        threadName = Thread.currentThread().name,
-                        first = type,
-                        second = tag,
-                        third = message,
-                        fourth = data
+        if(state != ConnectionState.Disconnected) {
+            try {
+                _clientHandler.sendMessage(
+                    _clientHandler.obtainMessage(
+                        MADAssistantTransmissionType.GenericLogs,
+                        MessageData(
+                            threadName = Thread.currentThread().name,
+                            first = type,
+                            second = tag,
+                            third = message,
+                            fourth = data
+                        )
                     )
                 )
-            )
-        } catch (ex: Exception) {
-            logUtils?.e(ex)
+            } catch (ex: Exception) {
+                logUtils?.e(ex)
+            }
         }
     }
 
