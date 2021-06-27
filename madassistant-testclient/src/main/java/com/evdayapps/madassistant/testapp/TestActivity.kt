@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.evdayapps.madassistant.adapters.okhttp3.MADAssistantOkHttp3Interceptor
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.MADAssistantClientImpl
-import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -45,11 +44,7 @@ class TestActivity : AppCompatActivity() {
 
         madAssistantClient = MADAssistantClientImpl(
             applicationContext = applicationContext,
-            connectionManager = ConnectionManagerImpl(
-                applicationContext = applicationContext,
-                repositorySignature = "",
-                logUtils = logUtils
-            ),
+            repositorySignature = "",
             passphrase = "test",
             logUtils = logUtils
         )

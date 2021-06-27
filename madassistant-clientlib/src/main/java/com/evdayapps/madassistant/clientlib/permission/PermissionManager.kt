@@ -16,10 +16,12 @@ interface PermissionManager {
      * - Store the permission model for later checks
      *
      * @param string The string received from the repository
+     * @param deviceIdentifier The unique identifier for the device, extracted from the handshake
+     *                         response
      * @return null string if no issues, else a string explaining the issue
      * @since 0.0.1
      */
-    fun setAuthToken(string: String?): String?
+    fun setAuthToken(string: String?, deviceIdentifier: String): String?
 
     /**
      * The base logging check

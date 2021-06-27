@@ -12,7 +12,8 @@ import java.util.regex.Pattern
 
 class PermissionManagerImpl(
     private val cipher: MADAssistantCipher,
-    private val logUtils: LogUtils? = null
+    private val logUtils: LogUtils? = null,
+    private val ignoreDeviceIdCheck : Boolean = false
 ) : PermissionManager {
 
     private val TAG = "PermissionManagerImpl"
@@ -41,19 +42,26 @@ class PermissionManagerImpl(
      * @return null string if no issues, else a string explaining the issue
      * @since 0.0.1
      */
-    override fun setAuthToken(string: String?): String? {
+    override fun setAuthToken(string: String?, deviceIdentifier: String): String? {
         if (string.isNullOrBlank()) {
             return "AuthToken was null or blank"
         } else {
             try {
                 val deciphered = cipher.decrypt(string)
                 val json = JSONObject(deciphered)
+
                 val permissions = MADAssistantPermissions(json)
+                this.permissions = permissions
                 logUtils?.i(
                     TAG,
                     "permissions: $permissions"
                 )
-                this.permissions = permissions
+
+                if(!ignoreDeviceIdCheck) {
+                    if(!deviceIdentifier.equals(permissions.deviceId, ignoreCase = true)) {
+                        throw Exception("Invalid device identifier")
+                    }
+                }
 
                 // Network Calls Regex
                 val flags = Pattern.MULTILINE and Pattern.CASE_INSENSITIVE

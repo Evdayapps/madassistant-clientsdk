@@ -17,14 +17,27 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 /**
  * An implementation of [MADAssistantClient]
  * @param applicationContext [required] The application context
+ *
  * @param passphrase [required] The encryption passphrase for the client
+ *
  * @param logUtils [optional] Instance of [LogUtils]
- * @param repositorySignature [optional] The SHA-256 signature of the MADAssistant repository
- *                            to prevent MITM attacks where a third party could impersonate the
- *                            repository's application Id
+ *
+ * @param ignoreDeviceIdCheck [optional]
+ *                            Should this instance allow logging even if device id check fails?
+ *                            This is utilised to generate a single authtoken for multiple users.
+ *                            NOT RECOMMENDED!
+ *
+ * @param repositorySignature [optional]
+ *                            The SHA-256 signature of the MADAssistant repository.
+ *                            This is to prevent MITM attacks where a third party could impersonate
+ *                            the repository's application Id
+ *
  * @param cipher [optional] An instance of the cipher. Auto created, if not provided
+ *
  * @param connectionManager [optional] An instance of [ConnectionManager]. Autocreated if not provided
+ *
  * @param permissionManager [optional] An instance of [PermissionManager]. Autocreated if not provided
+ *
  * @param transmitter [optional] An instance of [TransmissionManager]. Autocreated if not provided
  */
 class MADAssistantClientImpl(
@@ -33,9 +46,9 @@ class MADAssistantClientImpl(
     private val logUtils: LogUtils? = null,
     private val repositorySignature: String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
             "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63",
-    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(
-        passPhrase = passphrase,
-    ),
+    private val ignoreDeviceIdCheck: Boolean = false,
+    // Modules
+    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(passPhrase = passphrase),
     private val connectionManager: ConnectionManager = ConnectionManagerImpl(
         applicationContext = applicationContext,
         logUtils = logUtils,
@@ -43,7 +56,8 @@ class MADAssistantClientImpl(
     ),
     private val permissionManager: PermissionManager = PermissionManagerImpl(
         cipher = cipher,
-        logUtils = logUtils
+        logUtils = logUtils,
+        ignoreDeviceIdCheck = ignoreDeviceIdCheck
     ),
     private val transmitter: TransmissionManager = TransmissionManagerImpl(
         cipher = cipher,
@@ -86,7 +100,10 @@ class MADAssistantClientImpl(
 
     override fun validateHandshakeReponse(response: HandshakeResponseModel?) {
         val errorMessage: String? = when {
-            response?.successful == true -> permissionManager.setAuthToken(response.authToken)
+            response?.successful == true -> permissionManager.setAuthToken(
+                string = response.authToken,
+                deviceIdentifier = response.deviceIdentifier
+            )
             response?.errorMessage?.isNotBlank() == true -> response.errorMessage
             else -> "Unknown"
         }
