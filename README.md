@@ -9,6 +9,10 @@ The main goal of this project is to enable audit and logging of app events for l
 It achieves this by pairing with a companion app [https://play.google.com/store/apps/details?id=com.evdayapps.madassistant.repository] which serves as the repository for the logs.</br>
 By collecting all the different logs, it aims to provide a clear track of events which aid resolution of any issues.</br>
 
+### Companion App Screenshots
+<img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690291-d61c1200-d871-11eb-8b5f-98b8e19cb0b3.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690296-d7e5d580-d871-11eb-847c-cb4920aca976.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690302-d9170280-d871-11eb-8a6e-c8ce1c766478.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690309-da482f80-d871-11eb-923e-eea441e91615.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690315-dae0c600-d871-11eb-85b9-4d2271b14682.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690320-db795c80-d871-11eb-97c1-14d01275fdb6.png">
+
+
 
 ## What can it log
 The library currently provides logging for the following types of events:
