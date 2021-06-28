@@ -34,20 +34,19 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  *
  * @param cipher [optional] An instance of the cipher. Auto created, if not provided
  *
- * @param connectionManager [optional] An instance of [ConnectionManager]. Autocreated if not provided
+ * @param connectionManager [optional] An instance of [ConnectionManager]. Auto-created if not provided
  *
- * @param permissionManager [optional] An instance of [PermissionManager]. Autocreated if not provided
+ * @param permissionManager [optional] An instance of [PermissionManager]. Auto-created if not provided
  *
- * @param transmitter [optional] An instance of [TransmissionManager]. Autocreated if not provided
+ * @param transmitter [optional] An instance of [TransmissionManager]. Auto-created if not provided
  */
 class MADAssistantClientImpl(
     private val applicationContext: Context,
     private val passphrase: String,
     private val logUtils: LogUtils? = null,
-    private val repositorySignature: String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
-            "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63",
+    private val repositorySignature: String = DEFAULT_SIGNATURE,
     private val ignoreDeviceIdCheck: Boolean = false,
-    // Modules
+    // Components
     private val cipher: MADAssistantCipher = MADAssistantCipherImpl(passPhrase = passphrase),
     private val connectionManager: ConnectionManager = ConnectionManagerImpl(
         applicationContext = applicationContext,
@@ -69,13 +68,16 @@ class MADAssistantClientImpl(
 
     companion object {
         private const val TAG = "MADAssistantClientImpl"
+        private const val DEFAULT_SIGNATURE =
+            "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
+                    "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
     }
+
+    private var exceptionHandler: Thread.UncaughtExceptionHandler? = null
 
     init {
         connectionManager.setCallback(this)
     }
-
-    private var exceptionHandler: Thread.UncaughtExceptionHandler? = null
 
     override fun logCrashes() {
         if (exceptionHandler == null) {
