@@ -18,12 +18,13 @@ The library currently provides logging for the following types of events:
 - Generics Logs
 
 
-## Who benefits from it
+## Who does it benefit
 The library aims to provide utility to users across the SDLC, from developers to end-users.
 - Quality Assurance - By integrating it into test builds, it can serve as a log of every session, and log any crashes that might occur.
 - Product Owners - Logging of analytics events help in auditing builds for proper implementation of analytics events
 - Developers - Varies utility with all the different logs
-- End Users - This library can even be integrated into production builds, to enable debugging of issues on remote client devices.
+- End Users - This library can even be integrated into production builds, to enable debugging of issues on a client's device
+
 
 
 ## Security
