@@ -102,11 +102,11 @@ Filters:
 - Add jitpack support
   ```
   allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
+	repositories {
+		...
+		maven { url 'https://jitpack.io' }
 	}
+  }
   ```
 - Add the library as a dependency
   ```
