@@ -103,7 +103,7 @@ Filters:
 
 
 ## Integration into your application
-- Add jitpack support
+- Add the jitpack repository to project build.gradle
   ```
   allprojects {
 	repositories {
@@ -114,18 +114,52 @@ Filters:
   ```
 - Add the library as a dependency
   ```
-  implementation 'com.github.Evdayapps:MADAssistant-Library:0.0.7'
+  implementation 'com.github.Evdayapps.MADAssistant-Library:madassistant-clientlib:0.0.7'
+  // This is required to utilise an OkHttp Interceptor that will log network calls
+  implementation 'com.github.Evdayapps.MADAssistant-Library:madassistant-adapter-okhttp3-3:0.0.7'
   ```
 - Create an instance of MADAssistantClient
   ```
-  val client = MADAssistantClient(
-    
+  val client = MADAssistantClientImpl(
+    applicationContext = context,
+    passphrase = "<your passphrase here>",
+    logUtils = object : com.evdayapps.madassistant.clientlib.utils.LogUtils {
+        // This is optional. Use it if you wish to view logs from the library
+	override fun d(tag: String, message: String) = Log.d(tag, message)
+	override fun e(throwable: Throwable) = throwable.printStackTrace()
+	override fun i(tag: String, message: String) = Log.i(tag, message)
+    }
   )
   ```
-- Call the appropriate logging methods
+- Initialise the client
   ```
-  client.
+  client.bindToService()
   ```
+- Log events using the appropriate method
+  ```
+  // For Exceptions
+  fun logException(throwable: Throwable)
+  
+  // For Analytics
+  fun logAnalyticsEvent(destination: String, eventName: String, data: Map<String, Any?>)
+  
+  // For logs that match android.util.Log
+  fun logGenericLog(type: Int, tag: String, message: String, data: Map<String, Any?>?)
+
+  // For network logs. Alternately [MADAssistantOkHttp3Interceptor] can be used for okhttp setups
+  fun logNetworkCall(data: NetworkCallLogModel)
+  ```
+- Logging Crashes
+  ```
+  client.logCrashes()
+  ```
+  Alternately, crashes can be logged manually too using:
+  ```
+  client.logCrashReport(throwable: Throwable)
+  ```
+ 
+
+
 
 
 
