@@ -115,7 +115,12 @@ class TransmissionManagerImpl(
      * Queue the message again so its sent when the system is ready
      */
     private fun requeueMessage(message: Message) {
-        _clientHandler.sendMessage(message)
+        _clientHandler.sendMessage(
+            _clientHandler.obtainMessage(
+                message.what,
+                message.obj
+            )
+        )
     }
 
     /**
