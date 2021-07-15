@@ -65,11 +65,12 @@ class TestActivity : AppCompatActivity() {
                         )
                     )
                     .build()
+
+                // Make the call
                 val request = Request.Builder()
-                    .url("https://demo0064639.mockable.io/api/explore/thisisamock-showcasescreen")
+                    .url("https://api.github.com/users/google/repos")
                     .build()
-                val response = client.newCall(request).execute()
-                Log.i("TestActivity", "response: ${response.body.toString()}")
+                client.newCall(request).execute()
             } catch (ex: Exception) {
                 ex.printStackTrace()
             }
@@ -82,10 +83,14 @@ class TestActivity : AppCompatActivity() {
     }
 
     fun testAnalytics(view: View) {
+        val destination = listOf(
+            "Destination 1",
+            "Destination 2",
+            "Destination 3"
+        )[Random.nextInt(0, 3)]
+
         madAssistantClient.logAnalyticsEvent(
-            destination = listOf(
-                "Destination 1", "Destination 2", "Destination 3"
-            )[Random.nextInt(0, 3)],
+            destination = destination,
             eventName = "Heartbeat",
             data = mapOf(
                 "timestamp" to System.currentTimeMillis(),
@@ -96,10 +101,16 @@ class TestActivity : AppCompatActivity() {
     }
 
     fun testGenericLog(view: View) {
+        val type = listOf(
+            Log.VERBOSE,
+            Log.DEBUG,
+            Log.ERROR,
+            Log.INFO,
+            Log.WARN
+        )[Random.nextInt(from = 0, until = 5)]
+
         madAssistantClient.logGenericLog(
-            type = listOf(
-                Log.VERBOSE, Log.DEBUG, Log.ERROR, Log.INFO, Log.WARN
-            )[Random.nextInt(from = 0, until = 5)],
+            type = type,
             tag = "TestActivity",
             message = "testGenericLog: Entered ${System.currentTimeMillis()}",
             data = mapOf(

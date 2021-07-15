@@ -82,6 +82,7 @@ class MADAssistantClientImpl(
     override fun logCrashes() {
         if (exceptionHandler == null) {
             val def = Thread.getDefaultUncaughtExceptionHandler()
+
             exceptionHandler = Thread.UncaughtExceptionHandler { thread, throwable ->
                 logCrashReport(throwable)
                 def?.uncaughtException(thread, throwable)
@@ -110,13 +111,17 @@ class MADAssistantClientImpl(
             else -> "Unknown"
         }
 
-        if (errorMessage == null) {
-            startSession()
-            onStateChanged(ConnectionState.Connected)
-        } else {
-            logUtils?.i(TAG, "Handshake failed. Reason: $errorMessage")
-            disconnect()
-            onStateChanged(ConnectionState.Disconnected)
+        when (errorMessage) {
+            null -> {
+                logUtils?.i(TAG, "Handshake successful. Starting session")
+                startSession()
+                onStateChanged(ConnectionState.Connected)
+            }
+            else -> {
+                logUtils?.i(TAG, "Handshake failed. Reason: $errorMessage")
+                disconnect()
+                onStateChanged(ConnectionState.Disconnected)
+            }
         }
     }
     // endregion Connection
@@ -141,25 +146,39 @@ class MADAssistantClientImpl(
     // region Logging
     override fun isAssistantEnabled(): Boolean = permissionManager.isLoggingEnabled()
 
-    override fun logNetworkCall(data: NetworkCallLogModel) = transmitter.logNetworkCall(data)
+    override fun logNetworkCall(data: NetworkCallLogModel) = transmitter.logNetworkCall(
+        data = data
+    )
 
-    override fun logCrashReport(throwable: Throwable) = transmitter.logCrashReport(throwable)
+    override fun logCrashReport(throwable: Throwable) = transmitter.logCrashReport(
+        throwable = throwable
+    )
 
     override fun logAnalyticsEvent(
         destination: String,
         eventName: String,
         data: Map<String, Any?>
-    ) = transmitter.logAnalyticsEvent(destination, eventName, data)
+    ) = transmitter.logAnalyticsEvent(
+        destination = destination,
+        eventName = eventName,
+        data = data
+    )
 
     override fun logGenericLog(
         type: Int,
         tag: String,
         message: String,
         data: Map<String, Any?>?
-    ) = transmitter.logGenericLog(type, tag, message, data)
+    ) = transmitter.logGenericLog(
+        type = type,
+        tag = tag,
+        message = message,
+        data = data
+    )
 
-    override fun logException(throwable: Throwable) =
-        transmitter.logException(throwable)
+    override fun logException(throwable: Throwable) = transmitter.logException(
+        throwable = throwable
+    )
     // endregion Logging
 
 }
