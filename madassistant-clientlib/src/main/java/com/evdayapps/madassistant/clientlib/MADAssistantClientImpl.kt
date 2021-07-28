@@ -3,7 +3,6 @@ package com.evdayapps.madassistant.clientlib
 import android.content.Context
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
-import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionManager
@@ -16,29 +15,27 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
  * An implementation of [MADAssistantClient]
- * @param applicationContext [required] The application context
+ * @property applicationContext The application context
  *
- * @param passphrase [required] The encryption passphrase for the client
+ * @property passphrase The encryption passphrase for the client
  *
- * @param logUtils [optional] Instance of [LogUtils]
+ * @property logUtils Instance of [LogUtils]
  *
- * @param ignoreDeviceIdCheck [optional]
- *                            Should this instance allow logging even if device id check fails?
- *                            This is utilised to generate a single authtoken for multiple users.
+ * @property ignoreDeviceIdCheck Should this instance allow logging even if device id check fails?
+ *                            This is utilised to generate a single auth-token for multiple users.
  *                            NOT RECOMMENDED!
  *
- * @param repositorySignature [optional]
- *                            The SHA-256 signature of the MADAssistant repository.
+ * @property repositorySignature The SHA-256 signature of the MADAssistant repository.
  *                            This is to prevent MITM attacks where a third party could impersonate
  *                            the repository's application Id
  *
- * @param cipher [optional] An instance of the cipher. Auto created, if not provided
+ * @property cipher An instance of [MADAssistantCipher]. Auto created, if not provided
  *
- * @param connectionManager [optional] An instance of [ConnectionManager]. Auto-created if not provided
+ * @property connectionManager An instance of [ConnectionManager]. Auto-created if not provided
  *
- * @param permissionManager [optional] An instance of [PermissionManager]. Auto-created if not provided
+ * @property permissionManager An instance of [PermissionManager]. Auto-created if not provided
  *
- * @param transmitter [optional] An instance of [TransmissionManager]. Auto-created if not provided
+ * @property transmitter An instance of [TransmissionManager]. Auto-created if not provided
  */
 class MADAssistantClientImpl(
     private val applicationContext: Context,
@@ -71,6 +68,7 @@ class MADAssistantClientImpl(
         private const val DEFAULT_SIGNATURE =
             "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
                     "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
+
     }
 
     private var exceptionHandler: Thread.UncaughtExceptionHandler? = null
@@ -92,14 +90,13 @@ class MADAssistantClientImpl(
         }
     }
 
-    override fun onStateChanged(state: ConnectionState) {
-        transmitter.setState(state)
-    }
+    // region Connection Management
+    override fun connect() = connectionManager.bindToService()
 
-    // region Connection
-    override fun bindToService() = connectionManager.bindToService()
+    override fun disconnect(message: String?) = internalDisconnect(-1, message)
 
-    override fun unbindService() = connectionManager.unbindService()
+    private fun internalDisconnect(code: Int, message: String?) =
+        transmitter.disconnect(code = code, message = message)
 
     override fun validateHandshakeReponse(response: HandshakeResponseModel?) {
         val errorMessage: String? = when {
@@ -107,7 +104,9 @@ class MADAssistantClientImpl(
                 string = response.authToken,
                 deviceIdentifier = response.deviceIdentifier
             )
+
             response?.errorMessage?.isNotBlank() == true -> response.errorMessage
+
             else -> "Unknown"
         }
 
@@ -115,18 +114,16 @@ class MADAssistantClientImpl(
             null -> {
                 logUtils?.i(TAG, "Handshake successful. Starting session")
                 startSession()
-                onStateChanged(ConnectionState.Connected)
             }
             else -> {
                 logUtils?.i(TAG, "Handshake failed. Reason: $errorMessage")
-                disconnect()
-                onStateChanged(ConnectionState.Disconnected)
+                internalDisconnect(code = 401, message = errorMessage)
             }
         }
     }
-    // endregion Connection
+    // endregion Connection Management
 
-    // region Session
+    // region Session Management
     override fun startSession() {
         val sessionId = connectionManager.startSession()
         transmitter.startSession(sessionId)
@@ -134,18 +131,10 @@ class MADAssistantClientImpl(
 
     override fun endSession() {
         transmitter.endSession()
-        connectionManager.endSession()
     }
-
-    private fun disconnect() {
-        transmitter.disconnect(-1)
-        connectionManager.unbindService()
-    }
-    // endregion Session
+    // endregion Session Management
 
     // region Logging
-    override fun isAssistantEnabled(): Boolean = permissionManager.isLoggingEnabled()
-
     override fun logNetworkCall(data: NetworkCallLogModel) = transmitter.logNetworkCall(
         data = data
     )

@@ -50,7 +50,7 @@ class TestActivity : AppCompatActivity() {
         )
 
         // Bind the client to the remote service
-        madAssistantClient.bindToService()
+        madAssistantClient.connect()
 
         madAssistantClient.logCrashes()
     }

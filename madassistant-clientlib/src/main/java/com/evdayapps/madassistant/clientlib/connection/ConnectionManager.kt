@@ -1,6 +1,5 @@
 package com.evdayapps.madassistant.clientlib.connection
 
-import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.common.models.handshake.HandshakeResponseModel
 import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
 
@@ -11,8 +10,6 @@ interface ConnectionManager {
 
     interface Callback {
 
-        fun onStateChanged(state: ConnectionState)
-
         /**
          * The connection manager performs all the actions for the handshake with the repository
          * It then returns the response, if successful, to the client class
@@ -21,6 +18,11 @@ interface ConnectionManager {
          */
         fun validateHandshakeReponse(response: HandshakeResponseModel?)
     }
+
+    /**
+     * Return the current state of the connection
+     */
+    var currentState : ConnectionState
 
     /**
      * Sets a callback implementation that handles the handshake response
@@ -33,9 +35,9 @@ interface ConnectionManager {
     fun bindToService()
 
     /**
-     * Inform the repository that the client wishes to disconnect for [reason]
+     * Inform the repository that the client wishes to disconnect for [message]
      */
-    fun disconnect(reason: Int)
+    fun disconnect(code: Int, message: String?)
 
     /**
      * Unbind from the currently connected service
@@ -46,7 +48,7 @@ interface ConnectionManager {
     /**
      * Begins a new session
      */
-    fun startSession() : Long
+    fun startSession(): Long
 
     /**
      * Ends the current session

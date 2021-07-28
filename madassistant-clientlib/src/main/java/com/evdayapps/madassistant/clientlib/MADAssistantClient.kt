@@ -14,19 +14,18 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 interface MADAssistantClient {
 
     /**
-     * Utility method to check if the system is running
-     */
-    fun isAssistantEnabled(): Boolean
-
-    /**
      * Initialise a normal android Service binding to the repository
      */
-    fun bindToService()
+    fun connect()
 
     /**
-     * Unbind from the remote Repository service
+     * Disconnect from the service
+     *
+     * The default implementation in [MADAssistantClientImpl] passes the call to a
+     * [com.evdayapps.madassistant.clientlib.transmission.TransmissionManager] instance that
+     * transmits all logs in the queue and then disconnects from the service
      */
-    fun unbindService()
+    fun disconnect(message: String?)
 
     /**
      * Add the client to the tree of Unhandled exception handlers

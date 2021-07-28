@@ -6,9 +6,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
+import android.content.pm.Signature
+import android.os.Build
 import android.os.IBinder
-import com.evdayapps.madassistant.clientlib.connection.utils.ConnectionManagerUtils
-import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.BuildConfig
 import com.evdayapps.madassistant.common.MADAssistantClientAIDL
@@ -16,28 +17,34 @@ import com.evdayapps.madassistant.common.MADAssistantConstants
 import com.evdayapps.madassistant.common.MADAssistantRepositoryAIDL
 import com.evdayapps.madassistant.common.models.handshake.HandshakeResponseModel
 import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
+import java.security.MessageDigest
 
 class ConnectionManagerImpl(
     private val applicationContext: Context,
     private val logUtils: LogUtils? = null,
     private val repositorySignature: String = DEFAULT_REPO_SIGNATURE
-) : ConnectionManager, ServiceConnection {
+) : ConnectionManager, ServiceConnection, MADAssistantClientAIDL.Stub() {
 
     companion object {
+        const val TAG = "MADAssist:ConnectionManagerImpl"
+
         const val REPO_SERVICE_PACKAGE = "com.evdayapps.madassistant.repository"
         const val REPO_SERVICE_CLASS = "$REPO_SERVICE_PACKAGE.service.MADAssistantService"
-        const val TAG = "ConnectionManagerImpl"
         const val DEFAULT_REPO_SIGNATURE = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:" +
                 "7E:73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
     }
 
+    override var currentState: ConnectionState = ConnectionState.None
+
     private var callback: ConnectionManager.Callback? = null
     private var repositoryServiceAIDL: MADAssistantRepositoryAIDL? = null
 
-    private val clientAIDL: MADAssistantClientAIDL = object : MADAssistantClientAIDL.Stub() {
-        override fun onHandshakeResponse(data: HandshakeResponseModel?) {
-            callback?.validateHandshakeReponse(data)
-        }
+    /**
+     * Async callback for the repository to return the handshake response
+     * @param data Instance of [HandshakeResponseModel]
+     */
+    override fun onHandshakeResponse(data: HandshakeResponseModel?) {
+        callback?.validateHandshakeReponse(data)
     }
 
     override fun setCallback(callback: ConnectionManager.Callback) {
@@ -50,11 +57,10 @@ class ConnectionManagerImpl(
     override fun bindToService() {
         if (BuildConfig.DEBUG) {
             logUtils?.i(
-                TAG, "bindToService: $REPO_SERVICE_CLASS package: $REPO_SERVICE_PACKAGE"
+                TAG,
+                "bindToService: $REPO_SERVICE_CLASS package: $REPO_SERVICE_PACKAGE"
             )
         }
-
-        callback?.onStateChanged(ConnectionState.Connecting)
 
         val intent = Intent()
         intent.setClassName(REPO_SERVICE_PACKAGE, REPO_SERVICE_CLASS)
@@ -74,7 +80,7 @@ class ConnectionManagerImpl(
             Service.BIND_AUTO_CREATE
         )
 
-        logUtils?.i(TAG, "bindToService: Successful? $success")
+        logUtils?.i(TAG, "bindToService: ${if (success) "Successful" else "Failed"}")
     }
 
     /**
@@ -101,30 +107,30 @@ class ConnectionManagerImpl(
         val errorMessage: String? = when {
             pkgName.isNullOrBlank() -> "Invalid package name"
 
-            repositorySignature.isNotBlank() &&
-                    !ConnectionManagerUtils.isServiceLegit(
-                        applicationContext, repositorySignature, pkgName
-                    ) -> "Invalid repository signature"
+            repositorySignature.isNotBlank() && !isServiceLegit(
+                applicationContext = applicationContext,
+                repositorySignature = repositorySignature,
+                packageName = pkgName
+            ) -> "Invalid repository signature"
 
             else -> null
         }
 
         if (errorMessage == null) {
-            logUtils?.i(TAG, "Repository valid. Initiating handshake..")
+            logUtils?.i(TAG, "Repository validated. Initiating handshake..")
             repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
             initHandshake()
         } else {
-            logUtils?.i(TAG, "Repository invalid. Disconnecting.")
+            logUtils?.i(TAG, "Repository invalid. Error: $errorMessage")
             unbindService()
         }
     }
 
-    override fun disconnect(reason: Int) {
-        repositoryServiceAIDL?.disconnect(reason)
+    override fun disconnect(code: Int, message: String?) {
+        repositoryServiceAIDL?.disconnect(code, message)
     }
 
     override fun unbindService() {
-        callback?.onStateChanged(ConnectionState.Disconnected)
         applicationContext.unbindService(this)
     }
 
@@ -141,7 +147,6 @@ class ConnectionManagerImpl(
     override fun onServiceDisconnected(name: ComponentName?) {
         logUtils?.i(TAG, "Service disconnected")
         repositoryServiceAIDL = null
-        callback?.onStateChanged(ConnectionState.Disconnected)
     }
 
     /**
@@ -152,7 +157,7 @@ class ConnectionManagerImpl(
             logUtils?.i(TAG, "initialising handshake...")
             repositoryServiceAIDL?.initiateHandshake(
                 MADAssistantConstants.LibraryVersion,
-                clientAIDL
+                this
             )
         } catch (ex: Exception) {
             logUtils?.e(ex)
@@ -192,4 +197,60 @@ class ConnectionManagerImpl(
         }
     }
     // endregion Logging
+
+    // region Utils
+    /**
+     * Verify that the certificate signature for the repository is legit
+     *
+     * This is to avoid an MITM attack where another app could be used to intercept logs
+     * meant for MADAssistant Repository only
+     */
+    private fun isServiceLegit(
+        applicationContext: Context,
+        repositorySignature: String,
+        packageName: String
+    ): Boolean {
+
+        fun getSig(signature: Signature, key: String): String {
+            try {
+                val md = MessageDigest.getInstance(key)
+                md.update(signature.toByteArray())
+                val digest = md.digest()
+                val toRet = StringBuilder()
+                for (i in digest.indices) {
+                    if (i != 0) toRet.append(":")
+                    val b = digest[i].toInt() and 0xff
+                    val hex = Integer.toHexString(b)
+                    if (hex.length == 1) toRet.append("0")
+                    toRet.append(hex)
+                }
+
+                return toRet.toString()
+            } catch (ex: Exception) {
+                return "Failed"
+            }
+        }
+
+        val pkgInfo = applicationContext.packageManager.getPackageInfo(
+            packageName,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                PackageManager.GET_SIGNING_CERTIFICATES
+            } else {
+                PackageManager.GET_SIGNATURES
+            }
+        )
+
+        val signatures = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            pkgInfo.signatures
+        } else if (pkgInfo.signingInfo.hasMultipleSigners()) {
+            pkgInfo.signingInfo.apkContentsSigners
+        } else {
+            pkgInfo.signingInfo.signingCertificateHistory
+        }
+
+        return signatures.any {
+            getSig(it, "SHA256").equals(repositorySignature, ignoreCase = true)
+        }
+    }
+    // endregion Utils
 }
