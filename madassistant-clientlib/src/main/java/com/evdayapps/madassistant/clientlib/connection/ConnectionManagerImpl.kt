@@ -14,26 +14,27 @@ import com.evdayapps.madassistant.common.BuildConfig
 import com.evdayapps.madassistant.common.MADAssistantClientAIDL
 import com.evdayapps.madassistant.common.MADAssistantConstants
 import com.evdayapps.madassistant.common.MADAssistantRepositoryAIDL
-import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel
-import com.evdayapps.madassistant.common.transmission.TransmissionModel
+import com.evdayapps.madassistant.common.models.handshake.HandshakeResponseModel
+import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
 
 class ConnectionManagerImpl(
     private val applicationContext: Context,
     private val logUtils: LogUtils? = null,
-    private val repositorySignature : String = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:7E:" +
-            "73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
+    private val repositorySignature: String = DEFAULT_REPO_SIGNATURE
 ) : ConnectionManager, ServiceConnection {
 
     companion object {
         const val REPO_SERVICE_PACKAGE = "com.evdayapps.madassistant.repository"
         const val REPO_SERVICE_CLASS = "$REPO_SERVICE_PACKAGE.service.MADAssistantService"
         const val TAG = "ConnectionManagerImpl"
+        const val DEFAULT_REPO_SIGNATURE = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:" +
+                "7E:73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
     }
 
     private var callback: ConnectionManager.Callback? = null
     private var repositoryServiceAIDL: MADAssistantRepositoryAIDL? = null
 
-    private val clientAIDL : MADAssistantClientAIDL = object : MADAssistantClientAIDL.Stub() {
+    private val clientAIDL: MADAssistantClientAIDL = object : MADAssistantClientAIDL.Stub() {
         override fun onHandshakeResponse(data: HandshakeResponseModel?) {
             callback?.validateHandshakeReponse(data)
         }
@@ -97,18 +98,18 @@ class ConnectionManagerImpl(
         logUtils?.i(TAG, "Service connected")
 
         val pkgName = name?.packageName
-        val errorMessage : String? = when {
+        val errorMessage: String? = when {
             pkgName.isNullOrBlank() -> "Invalid package name"
 
-            repositorySignature.isNotBlank() && !
-            ConnectionManagerUtils.isServiceLegit(
-                applicationContext, repositorySignature, pkgName
-            ) -> "Invalid repository signature"
+            repositorySignature.isNotBlank() &&
+                    !ConnectionManagerUtils.isServiceLegit(
+                        applicationContext, repositorySignature, pkgName
+                    ) -> "Invalid repository signature"
 
             else -> null
         }
 
-        if(errorMessage == null) {
+        if (errorMessage == null) {
             logUtils?.i(TAG, "Repository valid. Initiating handshake..")
             repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
             initHandshake()

@@ -1,8 +1,8 @@
 package com.evdayapps.madassistant.clientlib.connection
 
 import com.evdayapps.madassistant.clientlib.constants.ConnectionState
-import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel
-import com.evdayapps.madassistant.common.transmission.TransmissionModel
+import com.evdayapps.madassistant.common.models.handshake.HandshakeResponseModel
+import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
 
 /**
  * Encapsulates logic to connect with and transmit final payload to the repository

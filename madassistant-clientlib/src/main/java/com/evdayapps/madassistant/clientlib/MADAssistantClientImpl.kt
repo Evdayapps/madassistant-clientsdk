@@ -9,9 +9,9 @@ import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionManager
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionManagerImpl
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
-import com.evdayapps.madassistant.common.encryption.MADAssistantCipher
-import com.evdayapps.madassistant.common.encryption.MADAssistantCipherImpl
-import com.evdayapps.madassistant.common.handshake.HandshakeResponseModel
+import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
+import com.evdayapps.madassistant.common.cipher.MADAssistantCipherImpl
+import com.evdayapps.madassistant.common.models.handshake.HandshakeResponseModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**

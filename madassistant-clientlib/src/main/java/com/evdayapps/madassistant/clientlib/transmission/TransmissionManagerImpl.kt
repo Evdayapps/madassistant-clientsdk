@@ -8,12 +8,12 @@ import com.evdayapps.madassistant.clientlib.constants.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
-import com.evdayapps.madassistant.common.encryption.MADAssistantCipher
+import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.models.analytics.AnalyticsEventModel
 import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
 import com.evdayapps.madassistant.common.models.genericlog.GenericLogModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
-import com.evdayapps.madassistant.common.transmission.TransmissionModel
+import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
 import java.util.*
 
 class TransmissionManagerImpl(

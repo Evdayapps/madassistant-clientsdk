@@ -2,9 +2,9 @@ package com.evdayapps.madassistant.clientlib.permission
 
 import android.util.Log
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
-import com.evdayapps.madassistant.common.encryption.MADAssistantCipher
-import com.evdayapps.madassistant.common.handshake.MADAssistantPermissions
+import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
+import com.evdayapps.madassistant.common.models.permissions.MADAssistantPermissions
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.InvalidObjectException
