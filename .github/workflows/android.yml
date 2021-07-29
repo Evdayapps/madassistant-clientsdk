@@ -1,4 +1,4 @@
-name: Generate APK
+name: Build Client test app apk
 on:
   push:
     branches: [ main ]
