@@ -32,6 +32,12 @@
         android:text="Test Non-Fatal Exception" />
 
     <Button
+        android:id="@+id/btnANR"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Test Application Not Responding" />
+
+    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:foregroundTint="@color/colorAccent"
