@@ -1,8 +1,5 @@
-rootProject.name='MADAssistant-ClientLib'
+rootProject.name='madassistant-client'
 
-include ':madassistant-common'
-project(':madassistant-common').projectDir = file("../madassistant-common/madassistant-common")
-
-include ':madassistant-clientlib'
+include ':madassistant-client'
 include ':madassistant-client-adapter-okhttp3'
 include ':testapp'

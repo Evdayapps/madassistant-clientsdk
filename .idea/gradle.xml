@@ -11,10 +11,9 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/madassistant-client" />
             <option value="$PROJECT_DIR$/madassistant-client-adapter-okhttp3" />
-            <option value="$PROJECT_DIR$/madassistant-clientlib" />
             <option value="$PROJECT_DIR$/testapp" />
-            <option value="$PROJECT_DIR$/../madassistant-common/madassistant-common" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
