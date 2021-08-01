@@ -125,6 +125,7 @@ class TransmissionManagerImpl(
      * - Drops the message if the state is Disconnected
      */
     override fun handleMessage(message: Message): Boolean {
+        logUtils?.i(TAG,"handleMessage: state: ${connectionManager.currentState} message: $message")
         when (connectionManager.currentState) {
             // If the client is connected/disconnecting, send the message
             ConnectionState.Connected,

@@ -62,6 +62,8 @@ class ConnectionManagerImpl(
             )
         }
 
+        currentState = ConnectionState.Connecting
+
         val intent = Intent()
         intent.setClassName(REPO_SERVICE_PACKAGE, REPO_SERVICE_CLASS)
         intent.putExtra(
@@ -102,35 +104,57 @@ class ConnectionManagerImpl(
      */
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
         logUtils?.i(TAG, "Service connected")
+        onServiceConnected(name?.packageName, service)
+    }
 
-        val pkgName = name?.packageName
-        val errorMessage: String? = when {
-            pkgName.isNullOrBlank() -> "Invalid package name"
+    private fun onServiceConnected(packageName: String?, service: IBinder?) {
+        val errorMessage: String? = validateRepositorySignature(
+            servicePackageName = packageName,
+            repositorySignature = repositorySignature,
+            serviceSignatures = getSignatureList(applicationContext, packageName)
+        )
 
-            repositorySignature.isNotBlank() && !isServiceLegit(
-                applicationContext = applicationContext,
-                repositorySignature = repositorySignature,
-                packageName = pkgName
-            ) -> "Invalid repository signature"
-
-            else -> null
+        when (errorMessage) {
+            null -> {
+                logUtils?.i(TAG, "Repository validated. Initiating handshake..")
+                repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
+                initHandshake()
+            }
+            else -> {
+                logUtils?.i(TAG, "Repository invalid. Error: $errorMessage")
+                unbindService()
+            }
         }
+    }
 
-        if (errorMessage == null) {
-            logUtils?.i(TAG, "Repository validated. Initiating handshake..")
-            repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
-            initHandshake()
-        } else {
-            logUtils?.i(TAG, "Repository invalid. Error: $errorMessage")
-            unbindService()
+    /**
+     * Check that the repository service signature is legit
+     * This ensures that no malicious app can be used to impersonate the MADAssistant repository app
+     * and consume the logs meant for it
+     *
+     * @param repositorySignature The repository signature
+     * @param serviceSignatures The list of signatures retrieved from the bound service
+     */
+    private fun validateRepositorySignature(
+        servicePackageName: String?,
+        repositorySignature: String,
+        serviceSignatures: List<String>
+    ): String? {
+        return when {
+            servicePackageName.isNullOrBlank() -> "Invalid package name"
+            repositorySignature.isBlank() -> null
+            serviceSignatures.any { it.equals(repositorySignature, ignoreCase = true) } -> null
+            else -> ""
         }
     }
 
     override fun disconnect(code: Int, message: String?) {
+        currentState = ConnectionState.Disconnected
         repositoryServiceAIDL?.disconnect(code, message)
     }
 
     override fun unbindService() {
+        currentState = ConnectionState.Disconnected
         applicationContext.unbindService(this)
     }
 
@@ -146,6 +170,7 @@ class ConnectionManagerImpl(
      */
     override fun onServiceDisconnected(name: ComponentName?) {
         logUtils?.i(TAG, "Service disconnected")
+        currentState = ConnectionState.Disconnected
         repositoryServiceAIDL = null
     }
 
@@ -200,56 +225,57 @@ class ConnectionManagerImpl(
 
     // region Utils
     /**
-     * Verify that the certificate signature for the repository is legit
-     *
-     * This is to avoid an MITM attack where another app could be used to intercept logs
-     * meant for MADAssistant Repository only
+     * Retrieve a list of signatures (in SHA-256) for a package
      */
-    private fun isServiceLegit(
+    private fun getSignatureList(
         applicationContext: Context,
-        repositorySignature: String,
-        packageName: String
-    ): Boolean {
+        packageName: String?
+    ): List<String> {
 
-        fun getSig(signature: Signature, key: String): String {
-            try {
-                val md = MessageDigest.getInstance(key)
-                md.update(signature.toByteArray())
-                val digest = md.digest()
-                val toRet = StringBuilder()
-                for (i in digest.indices) {
-                    if (i != 0) toRet.append(":")
-                    val b = digest[i].toInt() and 0xff
-                    val hex = Integer.toHexString(b)
-                    if (hex.length == 1) toRet.append("0")
-                    toRet.append(hex)
-                }
-
-                return toRet.toString()
-            } catch (ex: Exception) {
-                return "Failed"
-            }
-        }
-
-        val pkgInfo = applicationContext.packageManager.getPackageInfo(
-            packageName,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                PackageManager.GET_SIGNING_CERTIFICATES
-            } else {
-                PackageManager.GET_SIGNATURES
-            }
-        )
-
-        val signatures = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            pkgInfo.signatures
-        } else if (pkgInfo.signingInfo.hasMultipleSigners()) {
-            pkgInfo.signingInfo.apkContentsSigners
+        return if (packageName.isNullOrBlank()) {
+            emptyList()
         } else {
-            pkgInfo.signingInfo.signingCertificateHistory
-        }
+            // Retrieve Package Information
+            val flags = when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.P -> PackageManager.GET_SIGNING_CERTIFICATES
+                else -> PackageManager.GET_SIGNATURES
+            }
+            val pkgInfo = applicationContext.packageManager.getPackageInfo(
+                packageName,
+                flags
+            )
 
-        return signatures.any {
-            getSig(it, "SHA256").equals(repositorySignature, ignoreCase = true)
+            // Retrieve Signatures
+            val signatures = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                pkgInfo.signatures
+            } else when {
+                pkgInfo.signingInfo.hasMultipleSigners() -> pkgInfo.signingInfo.apkContentsSigners
+                else -> pkgInfo.signingInfo.signingCertificateHistory
+            }
+
+            signatures.map {
+                getSignature(it, "SHA256")
+            }
+        }
+    }
+
+    private fun getSignature(signature: Signature, key: String): String {
+        try {
+            val md = MessageDigest.getInstance(key)
+            md.update(signature.toByteArray())
+            val digest = md.digest()
+            val toRet = StringBuilder()
+            for (i in digest.indices) {
+                if (i != 0) toRet.append(":")
+                val b = digest[i].toInt() and 0xff
+                val hex = Integer.toHexString(b)
+                if (hex.length == 1) toRet.append("0")
+                toRet.append(hex)
+            }
+
+            return toRet.toString()
+        } catch (ex: Exception) {
+            return "Failed"
         }
     }
     // endregion Utils

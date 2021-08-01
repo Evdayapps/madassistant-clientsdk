@@ -3,6 +3,7 @@ package com.evdayapps.madassistant.clientlib
 import android.content.Context
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
+import com.evdayapps.madassistant.clientlib.connection.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionManager
@@ -113,6 +114,7 @@ class MADAssistantClientImpl(
         when (errorMessage) {
             null -> {
                 logUtils?.i(TAG, "Handshake successful. Starting session")
+                connectionManager.currentState = ConnectionState.Connected
                 startSession()
             }
             else -> {
