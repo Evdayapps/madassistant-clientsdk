@@ -27,7 +27,7 @@ class TransmissionManagerImpl(
         const val MAX_PAYLOAD_SIZE = 900 * 1024
     }
 
-    private val TAG = "TransmissionSenderImpl"
+    private val TAG = "TransmissionManagerImpl"
 
     private var sessionId: Long? = null
 
@@ -68,6 +68,7 @@ class TransmissionManagerImpl(
      */
     private fun addMessageToQueue(
         type: Int,
+        timestamp: Long = System.currentTimeMillis(),
         first: Any? = null,
         second: Any? = null,
         third: Any? = null,
@@ -79,7 +80,7 @@ class TransmissionManagerImpl(
             ConnectionState.Connected -> {
                 try {
                     val data = MessageData(
-                        timestamp = System.currentTimeMillis(),
+                        timestamp = timestamp,
                         threadName = Thread.currentThread().name,
                         first = first,
                         second = second,
@@ -109,6 +110,7 @@ class TransmissionManagerImpl(
      * Queue the message again so its sent when the system is ready
      */
     private fun queueMessage(type: Int, data: Any) {
+        logUtils?.i(TAG,"queueMessage: state: ${connectionManager.currentState} type: $type data: ${data.toString().take(256)}")
         _clientHandler.sendMessage(
             _clientHandler.obtainMessage(
                 type,
@@ -245,6 +247,7 @@ class TransmissionManagerImpl(
     override fun logNetworkCall(data: NetworkCallLogModel) {
         addMessageToQueue(
             type = MADAssistantTransmissionType.NetworkCall,
+            timestamp = data.requestTimestamp,
             first = data
         )
     }
@@ -270,6 +273,7 @@ class TransmissionManagerImpl(
 
     // region Logging: Crash Reports
     override fun logCrashReport(throwable: Throwable) {
+        logUtils?.i(TAG,"logCrashReport: state: ${connectionManager.currentState} ex: $throwable")
         _processException(
             MessageData(
                 timestamp = System.currentTimeMillis(),
