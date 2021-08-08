@@ -1,8 +1,6 @@
 package com.evdayapps.madassistant.clientlib.transmission
 
-import android.os.Handler
-import android.os.HandlerThread
-import android.os.Message
+import androidx.annotation.VisibleForTesting
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.connection.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
@@ -16,148 +14,63 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
 import java.util.*
 
-class TransmissionManagerImpl(
+/**
+ * Responsibilities:
+ * - Session management
+ * - Pseudo queue-management (using [queueManager])
+ * - Validating transmissions using [permissionManager]
+ * - Converting transmissions to [TransmissionModel]
+ * -
+ */
+class Transmitter(
     private val cipher: MADAssistantCipher,
     private val permissionManager: PermissionManager,
     private val connectionManager: ConnectionManager,
-    private val logUtils: LogUtils? = null
-) : TransmissionManager, Handler.Callback {
+    private val logUtils: LogUtils? = null,
+    private val queueManager: QueueManager = QueueManager(
+        connectionManager = connectionManager,
+        logUtils = logUtils
+    )
+) : QueueManager.Callback {
+
+    private val TAG = "MADAssist.Transmitter"
 
     companion object {
         const val MAX_PAYLOAD_SIZE = 900 * 1024
     }
 
-    private val TAG = "TransmissionManagerImpl"
-
     private var sessionId: Long? = null
 
-    private var _clientThreadHandler: HandlerThread =
-        HandlerThread("MADAssistantConnection").apply {
-            start()
-        }
-
-    private var _clientHandler: Handler = Handler(_clientThreadHandler.looper, this)
+    init {
+        queueManager.setCallback(this)
+    }
 
     // endregion State
 
     // region Session Management
-    override fun startSession(sessionId: Long) {
+    fun startSession(sessionId: Long) {
         this.sessionId = sessionId
     }
 
     /**
      * Initiate the disconnection process
      */
-    override fun disconnect(code: Int, message: String?) {
+    fun disconnect(code: Int, message: String?) {
         connectionManager.currentState = ConnectionState.Disconnecting
         endSession()
         connectionManager.disconnect(code = code, message = message)
     }
 
-    override fun endSession() {
+    fun endSession() {
         connectionManager.endSession()
         this.sessionId = null
     }
     // endregion Session Management
 
-    // region Queue Management
     /**
-     * Add a new message to the queue
-     * @param type The type of the log. One of [MADAssistantTransmissionType]
-     * @param data The payload for the log
+     * Invokes the correct processing method based on [type]
      */
-    private fun addMessageToQueue(
-        type: Int,
-        timestamp: Long = System.currentTimeMillis(),
-        first: Any? = null,
-        second: Any? = null,
-        third: Any? = null,
-        fourth: Any? = null
-    ) {
-        when (connectionManager.currentState) {
-            ConnectionState.None,
-            ConnectionState.Connecting,
-            ConnectionState.Connected -> {
-                try {
-                    val data = MessageData(
-                        timestamp = timestamp,
-                        threadName = Thread.currentThread().name,
-                        first = first,
-                        second = second,
-                        third = third,
-                        fourth = fourth
-                    )
-
-                    queueMessage(
-                        type = type,
-                        data = data
-                    )
-                } catch (ex: Exception) {
-                    logUtils?.e(ex)
-                }
-            }
-
-            ConnectionState.Disconnecting,
-            ConnectionState.Disconnected -> {
-                // Don't add any new messages to the queue,
-                // since we've already received a disconnect signal
-            }
-        }
-    }
-
-    /**
-     * Since the system is not yet ready to send the message (and not disconnecting/disconnected),
-     * Queue the message again so its sent when the system is ready
-     */
-    private fun queueMessage(type: Int, data: Any) {
-        logUtils?.i(TAG,"queueMessage: state: ${connectionManager.currentState} type: $type data: ${data.toString().take(256)}")
-        _clientHandler.sendMessage(
-            _clientHandler.obtainMessage(
-                type,
-                data
-            )
-        )
-    }
-
-    /**
-     * Handles the message received from the Handler Callback
-     * Does one of 3 things, depending on connection state:
-     * - Sends the message if the state is Connected or Disconnecting (to clear the queue)
-     * - Requeue the message if state is None or Connecting
-     * - Drops the message if the state is Disconnected
-     */
-    override fun handleMessage(message: Message): Boolean {
-        logUtils?.i(TAG,"handleMessage: state: ${connectionManager.currentState} message: $message")
-        when (connectionManager.currentState) {
-            // If the client is connected/disconnecting, send the message
-            ConnectionState.Connected,
-            ConnectionState.Disconnecting -> processMessage(
-                message.what,
-                message.obj as MessageData
-            )
-
-            // The client is not yet ready to send messages, requeue the message
-            ConnectionState.None,
-            ConnectionState.Connecting -> queueMessage(
-                type = message.what,
-                data = message.obj
-            )
-
-
-            // If the client is disconnected, drop the message
-            ConnectionState.Disconnected -> {
-                // Drop the message
-            }
-        }
-
-        return true
-    }
-
-    /**
-     * Processes (validates, serializes and transmits) the log on a background thread
-     *
-     */
-    private fun processMessage(
+    override fun processMessage(
         type: Int,
         data: MessageData
     ) {
@@ -168,7 +81,6 @@ class TransmissionManagerImpl(
             MADAssistantTransmissionType.GenericLogs -> _processGenericLog(data)
         }
     }
-    // endregion Queue Management
 
     // region Logging: Common
     /**
@@ -196,13 +108,15 @@ class TransmissionManagerImpl(
         }
 
         val list = mutableListOf<TransmissionModel>()
-        for (i in 0 until numSegments) {
-            val startPayloadSegment = i * MAX_PAYLOAD_SIZE
-            val endPayloadSegment = minOf(
-                startPayloadSegment + MAX_PAYLOAD_SIZE,
+        for (segmentIndex in 0 until numSegments) {
+            val segmentStart = segmentIndex * MAX_PAYLOAD_SIZE
+            val segmentEnd = minOf(
+                segmentStart + MAX_PAYLOAD_SIZE,
                 bytes.size
             )
-            val payload = bytes.sliceArray(IntRange(startPayloadSegment, endPayloadSegment - 1))
+            val payload = bytes.sliceArray(
+                IntRange(segmentStart, segmentEnd - 1)
+            )
 
             val model = TransmissionModel(
                 sessionId!!,
@@ -210,7 +124,7 @@ class TransmissionManagerImpl(
                 timestamp,
                 encrypted,
                 numSegments,
-                i,
+                segmentIndex,
                 type,
                 payload
             )
@@ -223,19 +137,38 @@ class TransmissionManagerImpl(
 
     /**
      * Internal method that does the actual transmission
-     *
+     * @param json the payload serialized into a JSON string
+     * @param type The type of log
+     * @param timestamp The time at which this log was added to the handler
+     * @param encrypt Whether to encrypt the payload or not
      */
     private fun transmit(json: String, type: Int, timestamp: Long, encrypt: Boolean) {
-        val transmitJson = if (encrypt) cipher.encrypt(json) else json
-        jsonToSegments(transmitJson, type, encrypt).forEach {
-            it.timestamp = timestamp
+        // Encrypt the payload if required
+        val transmitJson = when {
+            encrypt -> cipher.encrypt(json)
+            else -> json
+        }
 
-            logUtils?.i(
+        // Split the payload into segments to accomodate maximum Bundle limit
+        val segments = jsonToSegments(
+            json = transmitJson,
+            type = type,
+            encrypted = encrypt
+        )
+
+        // Transmit each segment
+        segments.forEachIndexed { index, segment ->
+            // Set the timestamp for the first segment
+            if (index == 0) {
+                segment.timestamp = timestamp
+            }
+
+            logUtils?.v(
                 TAG,
-                "transmit: type: $type, enc: $encrypt json: ${json.take(10)}"
+                "transmit: type: $type, enc: $encrypt json: ${json.take(128)}"
             )
 
-            connectionManager.transmit(it)
+            connectionManager.transmit(segment)
         }
     }
     // endregion Logging: Common
@@ -244,14 +177,15 @@ class TransmissionManagerImpl(
     /**
      * Add a network call to the processing queue
      */
-    override fun logNetworkCall(data: NetworkCallLogModel) {
-        addMessageToQueue(
+    fun logNetworkCall(data: NetworkCallLogModel) {
+        queueManager.addMessageToQueue(
             type = MADAssistantTransmissionType.NetworkCall,
             timestamp = data.requestTimestamp,
             first = data
         )
     }
 
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     private fun _processNetworkCall(data: MessageData) {
         try {
             val payload = data.first as NetworkCallLogModel
@@ -272,8 +206,7 @@ class TransmissionManagerImpl(
     // endregion Logging: Network
 
     // region Logging: Crash Reports
-    override fun logCrashReport(throwable: Throwable) {
-        logUtils?.i(TAG,"logCrashReport: state: ${connectionManager.currentState} ex: $throwable")
+    fun logCrashReport(throwable: Throwable) {
         _processException(
             MessageData(
                 timestamp = System.currentTimeMillis(),
@@ -284,14 +217,20 @@ class TransmissionManagerImpl(
         )
     }
 
-    override fun logException(throwable: Throwable) {
-        addMessageToQueue(
+    /**
+     * Adds an exception to the queue
+     */
+    fun logException(throwable: Throwable) {
+        queueManager.addMessageToQueue(
             type = MADAssistantTransmissionType.Exception,
             first = throwable,
             second = false,
         )
     }
 
+    /**
+     * Handles an exception from the queue
+     */
     private fun _processException(messageData: MessageData) {
         try {
             val throwable: Throwable = messageData.first as Throwable
@@ -318,14 +257,14 @@ class TransmissionManagerImpl(
 
     // region Logging: Analytics
     /**
-     * Enqueue an analytics log for processing
+     * Adds an analytics log to the queue for processing
      */
-    override fun logAnalyticsEvent(
+    fun logAnalyticsEvent(
         destination: String,
         eventName: String,
         data: Map<String, Any?>
     ) {
-        addMessageToQueue(
+        queueManager.addMessageToQueue(
             type = MADAssistantTransmissionType.Analytics,
             first = destination,
             second = eventName,
@@ -364,13 +303,13 @@ class TransmissionManagerImpl(
     /**
      * Enqueue a generic log in the message queue
      */
-    override fun logGenericLog(
+    fun logGenericLog(
         type: Int,
         tag: String,
         message: String,
         data: Map<String, Any?>?
     ) {
-        addMessageToQueue(
+        queueManager.addMessageToQueue(
             type = MADAssistantTransmissionType.GenericLogs,
             first = type,
             second = tag,

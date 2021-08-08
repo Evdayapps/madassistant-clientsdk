@@ -4,6 +4,8 @@ interface LogUtils {
 
     fun i(tag: String, message: String)
 
+    fun v(tag: String, message: String)
+
     fun d(tag: String, message: String)
 
     fun e(throwable: Throwable)

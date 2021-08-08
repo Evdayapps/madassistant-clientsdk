@@ -13,7 +13,7 @@ import java.util.regex.Pattern
 class PermissionManagerImpl(
     private val cipher: MADAssistantCipher,
     private val logUtils: LogUtils? = null,
-    private val ignoreDeviceIdCheck : Boolean = false
+    private val ignoreDeviceIdCheck: Boolean = false
 ) : PermissionManager {
 
     private val TAG = "PermissionManagerImpl"
@@ -57,8 +57,8 @@ class PermissionManagerImpl(
                     "permissions: $permissions"
                 )
 
-                if(!ignoreDeviceIdCheck) {
-                    if(!deviceIdentifier.equals(permissions.deviceId, ignoreCase = true)) {
+                if (!ignoreDeviceIdCheck) {
+                    if (!deviceIdentifier.equals(permissions.deviceId, ignoreCase = true)) {
                         throw Exception("Invalid device identifier")
                     }
                 }
@@ -66,42 +66,42 @@ class PermissionManagerImpl(
                 // Network Calls Regex
                 val flags = Pattern.MULTILINE and Pattern.CASE_INSENSITIVE
                 patternNetworkCallMethod =
-                    permissions.networkCalls.filterMethod
+                    permissions.networkCalls?.filterMethod
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternNetworkCallUrl =
-                    permissions.networkCalls.filterUrl
+                    permissions.networkCalls?.filterUrl
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternAnalyticsDestination =
-                    permissions.analytics.filterDestination
+                    permissions.analytics?.filterDestination
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternAnalyticsName =
-                    permissions.analytics.filterEventName
+                    permissions.analytics?.filterEventName
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternAnalyticsParams =
-                    permissions.analytics.filterParamData
+                    permissions.analytics?.filterParamData
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternGenericLogsTag =
-                    permissions.genericLogs.filterTag
+                    permissions.genericLogs?.filterTag
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternGenericLogsMessage =
-                    permissions.genericLogs.filterMessage
+                    permissions.genericLogs?.filterMessage
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternExceptionsType =
-                    permissions.exceptions.filterType
+                    permissions.exceptions?.filterType
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternExceptionsMessage =
-                    permissions.exceptions.filterMessage
+                    permissions.exceptions?.filterMessage
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
@@ -152,17 +152,13 @@ class PermissionManagerImpl(
         }
 
         if (patternNetworkCallMethod != null) {
-            if (patternNetworkCallMethod?.matcher(networkCallLogModel.method ?: "")
-                    ?.matches() != true
-            ) {
+            if (patternNetworkCallMethod?.matcher(networkCallLogModel.method)?.matches() != true) {
                 return false
             }
         }
 
         if (patternNetworkCallUrl != null) {
-            if (patternNetworkCallUrl?.matcher(networkCallLogModel.url ?: "")
-                    ?.matches() != true
-            ) {
+            if (patternNetworkCallUrl?.matcher(networkCallLogModel.url)?.matches() != true) {
                 return false
             }
         }

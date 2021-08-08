@@ -2,12 +2,10 @@ package com.evdayapps.madassistant.clientlib
 
 import android.content.Context
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
-import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
 import com.evdayapps.madassistant.clientlib.connection.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
-import com.evdayapps.madassistant.clientlib.transmission.TransmissionManager
-import com.evdayapps.madassistant.clientlib.transmission.TransmissionManagerImpl
+import com.evdayapps.madassistant.clientlib.transmission.Transmitter
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipherImpl
@@ -46,7 +44,7 @@ class MADAssistantClientImpl(
     private val ignoreDeviceIdCheck: Boolean = false,
     // Components
     private val cipher: MADAssistantCipher = MADAssistantCipherImpl(passPhrase = passphrase),
-    private val connectionManager: ConnectionManager = ConnectionManagerImpl(
+    private val connectionManager: ConnectionManager = ConnectionManager(
         applicationContext = applicationContext,
         logUtils = logUtils,
         repositorySignature = repositorySignature
@@ -56,7 +54,7 @@ class MADAssistantClientImpl(
         logUtils = logUtils,
         ignoreDeviceIdCheck = ignoreDeviceIdCheck
     ),
-    private val transmitter: TransmissionManager = TransmissionManagerImpl(
+    private val transmitter: Transmitter = Transmitter(
         cipher = cipher,
         permissionManager = permissionManager,
         connectionManager = connectionManager,

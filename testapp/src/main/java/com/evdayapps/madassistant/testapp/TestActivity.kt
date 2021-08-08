@@ -16,7 +16,7 @@ import kotlin.random.Random
 
 class TestActivity : AppCompatActivity() {
 
-    private val TAG = "SimpleActivity"
+    private val TAG = "TestActivity"
 
     lateinit var madAssistantClient: MADAssistantClient
 
@@ -38,6 +38,10 @@ class TestActivity : AppCompatActivity() {
         val logUtils = object : LogUtils {
             override fun i(tag: String, message: String) {
                 Log.i(tag, message)
+            }
+
+            override fun v(tag: String, message: String) {
+                Log.v(tag, message)
             }
 
             override fun d(tag: String, message: String) {
