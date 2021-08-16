@@ -27,11 +27,11 @@ class Transmitter(
     private val permissionManager: PermissionManager,
     private val connectionManager: ConnectionManager,
     private val logUtils: LogUtils? = null,
-    private val queueManager: QueueManager = QueueManager(
+    private val queueManager: TransmissionQueueManager = TransmissionQueueManager(
         connectionManager = connectionManager,
         logUtils = logUtils
     )
-) : QueueManager.Callback {
+) : TransmissionQueueManager.Callback {
 
     private val TAG = "MADAssist.Transmitter"
 
@@ -142,7 +142,8 @@ class Transmitter(
      * @param timestamp The time at which this log was added to the handler
      * @param encrypt Whether to encrypt the payload or not
      */
-    private fun transmit(json: String, type: Int, timestamp: Long, encrypt: Boolean) {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal fun transmit(json: String, type: Int, timestamp: Long, encrypt: Boolean) {
         // Encrypt the payload if required
         val transmitJson = when {
             encrypt -> cipher.encrypt(json)

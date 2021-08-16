@@ -2,6 +2,7 @@ package com.evdayapps.madassistant.clientlib.transmission
 
 import android.os.Handler
 import android.os.Message
+import android.util.Log
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.connection.ConnectionState
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
@@ -11,57 +12,107 @@ import io.mockk.impl.annotations.MockK
 import org.junit.Before
 import org.junit.Test
 
-/**
- * These tests are failing miserably cause of my inability to understand how to handle Handler in tests
- * Will research that and revisit this!
- */
-class QueueManagerTest {
+class TransmissionQueueManagerTest {
 
     @MockK
     lateinit var connectionManager: ConnectionManager
 
-    @MockK
     lateinit var logUtils: LogUtils
 
-    lateinit var queueManager: QueueManager
+    lateinit var queueManager: TransmissionQueueManager
 
     @MockK
-    lateinit var callback: QueueManager.Callback
+    lateinit var callback: TransmissionQueueManager.Callback
 
-    @MockK
     lateinit var handler: Handler
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
+
+        handler = mockkClass(Handler::class)
+
         val slot = slot<Message>()
         every { handler.sendMessage(capture(slot)) } answers { queueManager.handleMessage(slot.captured) }
 
-        val actualQM = QueueManager(
-            connectionManager = connectionManager
-        )
+        val slotType = slot<Int>()
+        val slotObject = slot<Any>()
+        every { handler.obtainMessage(capture(slotType), capture(slotObject)) } answers {
+            Message.obtain(handler, slotType.captured, slotObject.captured)
+        }
+
+        logUtils = object : LogUtils {
+            override fun i(tag: String, message: String) {
+                Log.i(tag, message)
+            }
+
+            override fun v(tag: String, message: String) {
+                Log.v(tag, message)
+            }
+
+            override fun d(tag: String, message: String) {
+                Log.d(tag, message)
+            }
+
+            override fun e(throwable: Throwable) {
+                throwable.printStackTrace()
+            }
+
+        }
 
         queueManager = spyk(
-            objToCopy = actualQM,
+            objToCopy = TransmissionQueueManager(
+                connectionManager = connectionManager,
+                handler = handler,
+                logUtils = logUtils
+            ),
             recordPrivateCalls = true
         )
 
         queueManager.setCallback(callback)
     }
 
+    /**
+     * Given: Connection Manager State is none
+     * When: addMessage called
+     * Expect: Call should not be queued
+     */
     @Test
-    fun addToQueueIfNoConnection() {
+    fun queueHandlingForNoneState() {
         every { connectionManager.currentState } returns ConnectionState.None
+
         queueManager.addMessageToQueue(MADAssistantTransmissionType.Analytics, first = "Test")
-        verify(atLeast = 2) {
-            queueManager.queueMessage(
-                MADAssistantTransmissionType.Analytics,
-                any()
-            )
-        }
-        verify(exactly = 0) {
-            callback.processMessage(type = any(), data = any())
-        }
+        verify(exactly = 0) { queueManager.queueMessage(any(), any()) }
+    }
+
+    /**
+     * Given: ConnectionManager state is connecting
+     * When: addMessage called
+     * Expect: Call should be queued but not processed
+     */
+    @Test(timeout = 20000)
+    fun queueHandlingWhenConnectingState() {
+        every { connectionManager.currentState } returns ConnectionState.Connecting
+        queueManager.addMessageToQueue(MADAssistantTransmissionType.Analytics, first = "Test")
+        verify(atLeast = 1) { queueManager.addMessageToQueue(any(), any(), any(), any(), any()) }
+        verify(atLeast = 1) { queueManager.queueMessage(any(), any()) }
+        verify(exactly = 0) { callback.processMessage(any(), any()) }
+    }
+
+    /**
+     * Given: ConnectionManager state is connected
+     * When: addMessage called
+     * Expect: callback processMessage should be called
+     */
+    @Test
+    fun queueHandlingWhenConnectedState() {
+        every { connectionManager.currentState } returns ConnectionState.Connected
+
+        queueManager.addMessageToQueue(MADAssistantTransmissionType.Analytics, first = "Test")
+
+        verify(exactly = 1) { queueManager.handleMessage(any()) }
+        verify(exactly = 1) { queueManager.queueMessage(any(), any()) }
+        verify(exactly = 1) { callback.processMessage(any(), any()) }
     }
 
 }

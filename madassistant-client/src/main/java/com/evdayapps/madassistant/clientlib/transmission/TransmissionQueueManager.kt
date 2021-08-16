@@ -17,8 +17,9 @@ import com.evdayapps.madassistant.common.MADAssistantTransmissionType
  * - Deque logs from queue and check if they need to be transmitted, requeued or discarded
  * - Call [Callback.processMessage] as required
  */
-class QueueManager(
+class TransmissionQueueManager(
     private val connectionManager: ConnectionManager,
+    private val handler : Handler? = null,
     private val logUtils: LogUtils? = null
 ) : Handler.Callback {
 
@@ -34,7 +35,7 @@ class QueueManager(
     private var _clientThreadHandler: HandlerThread = HandlerThread(TAG).apply { start() }
 
     private val _clientHandler: Handler by lazy {
-        Handler(_clientThreadHandler.looper, this)
+        handler ?: Handler(_clientThreadHandler.looper, this)
     }
 
     private var callback: Callback? = null
@@ -53,7 +54,6 @@ class QueueManager(
         fourth: Any? = null
     ) {
         when (connectionManager.currentState) {
-            ConnectionState.None,
             ConnectionState.Connecting,
             ConnectionState.Connected -> {
                 try {
@@ -75,6 +75,7 @@ class QueueManager(
                 }
             }
 
+            ConnectionState.None,
             ConnectionState.Disconnecting,
             ConnectionState.Disconnected -> {
                 // Don't add any new messages to the queue,
@@ -87,8 +88,7 @@ class QueueManager(
      * Since the system is not yet ready to send the message (and not disconnecting/disconnected),
      * Queue the message again so its sent when the system is ready
      */
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    fun queueMessage(type: Int, data: Any) {
+    internal fun queueMessage(type: Int, data: Any) {
         logUtils?.v(
             TAG,
             "queueMessage: state: ${connectionManager.currentState} type: $type data: ${
@@ -124,14 +124,13 @@ class QueueManager(
             )
 
             // The client is not yet ready to send messages, requeue the message
-            ConnectionState.None,
             ConnectionState.Connecting -> queueMessage(
                 type = message.what,
                 data = message.obj
             )
 
-
-            // If the client is disconnected, drop the message
+            // If the client is disconnected or none, drop the message
+            ConnectionState.None,
             ConnectionState.Disconnected -> {
                 // Drop the message
             }

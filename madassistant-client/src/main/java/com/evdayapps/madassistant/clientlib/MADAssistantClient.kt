@@ -14,7 +14,7 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 interface MADAssistantClient {
 
     /**
-     * Initialise a normal android Service binding to the repository
+     * Attempt to connect to the service in the MADAssistant app
      */
     fun connect()
 
