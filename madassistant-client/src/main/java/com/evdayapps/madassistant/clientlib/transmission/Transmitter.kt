@@ -119,14 +119,14 @@ class Transmitter(
             )
 
             val model = TransmissionModel(
-                sessionId!!,
-                transmissionId,
-                timestamp,
-                encrypted,
-                numSegments,
-                segmentIndex,
-                type,
-                payload
+                sessionId = sessionId!!,
+                transmissionId = transmissionId,
+                timestamp = timestamp,
+                encrypted = encrypted,
+                numTotalSegments = numSegments,
+                currentSegmentIndex = segmentIndex,
+                type = type,
+                payload = payload
             )
 
             list.add(model)
@@ -143,7 +143,12 @@ class Transmitter(
      * @param encrypt Whether to encrypt the payload or not
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    internal fun transmit(json: String, type: Int, timestamp: Long, encrypt: Boolean) {
+    internal fun transmit(
+        json: String,
+        type: Int,
+        timestamp: Long,
+        encrypt: Boolean
+    ) {
         // Encrypt the payload if required
         val transmitJson = when {
             encrypt -> cipher.encrypt(json)
@@ -197,7 +202,7 @@ class Transmitter(
                     json = json,
                     type = MADAssistantTransmissionType.NetworkCall,
                     timestamp = data.timestamp,
-                    encrypt = permissionManager.shouldEncryptApiLog()
+                    encrypt = permissionManager.shouldEncryptLogs()
                 )
             }
         } catch (ex: Exception) {
@@ -247,7 +252,7 @@ class Transmitter(
                     json = json,
                     type = MADAssistantTransmissionType.Exception,
                     timestamp = messageData.timestamp,
-                    encrypt = permissionManager.shouldEncryptCrashReports()
+                    encrypt = permissionManager.shouldEncryptLogs()
                 )
             }
         } catch (ex: Exception) {
@@ -284,7 +289,7 @@ class Transmitter(
             if (permissionManager.shouldLogAnalytics(destination, eventName, data)) {
                 transmit(
                     type = MADAssistantTransmissionType.Analytics,
-                    encrypt = permissionManager.shouldEncryptAnalytics(),
+                    encrypt = permissionManager.shouldEncryptLogs(),
                     timestamp = messageData.timestamp,
                     json = AnalyticsEventModel(
                         threadName = messageData.threadName,
@@ -336,7 +341,7 @@ class Transmitter(
 
                 transmit(
                     type = MADAssistantTransmissionType.GenericLogs,
-                    encrypt = permissionManager.shouldEncryptGenericLogs(),
+                    encrypt = permissionManager.shouldEncryptLogs(),
                     timestamp = messageData.timestamp,
                     json = payload.toJsonObject().toString(0)
                 )

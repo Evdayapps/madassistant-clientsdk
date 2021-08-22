@@ -58,7 +58,7 @@ class ConnectionManager(
         callback?.validateHandshakeReponse(data)
     }
 
-    fun setCallback(callback: ConnectionManager.Callback) {
+    fun setCallback(callback: Callback) {
         this.callback = callback
     }
 
@@ -264,29 +264,25 @@ class ConnectionManager(
                 else -> pkgInfo.signingInfo.signingCertificateHistory
             }
 
-            signatures.map {
-                getSignature(it, "SHA256")
-            }
-        }
-    }
+            signatures.map { signature ->
+                try {
+                    val md = MessageDigest.getInstance("SHA256")
+                    md.update(signature.toByteArray())
+                    val digest = md.digest()
+                    val toRet = StringBuilder()
+                    for (i in digest.indices) {
+                        if (i != 0) toRet.append(":")
+                        val b = digest[i].toInt() and 0xff
+                        val hex = Integer.toHexString(b)
+                        if (hex.length == 1) toRet.append("0")
+                        toRet.append(hex)
+                    }
 
-    private fun getSignature(signature: Signature, key: String): String {
-        try {
-            val md = MessageDigest.getInstance(key)
-            md.update(signature.toByteArray())
-            val digest = md.digest()
-            val toRet = StringBuilder()
-            for (i in digest.indices) {
-                if (i != 0) toRet.append(":")
-                val b = digest[i].toInt() and 0xff
-                val hex = Integer.toHexString(b)
-                if (hex.length == 1) toRet.append("0")
-                toRet.append(hex)
+                    toRet.toString()
+                } catch (ex: Exception) {
+                    "Failed"
+                }
             }
-
-            return toRet.toString()
-        } catch (ex: Exception) {
-            return "Failed"
         }
     }
     // endregion Utils

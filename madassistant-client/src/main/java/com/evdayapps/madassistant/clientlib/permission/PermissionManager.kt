@@ -34,6 +34,12 @@ interface PermissionManager {
      */
     fun isLoggingEnabled(): Boolean
 
+    /**
+     * Should api call logs be encrypted?
+     * @return true if read is false
+     */
+    fun shouldEncryptLogs(): Boolean
+
     // region Api Logs
     /**
      * Test if [networkCallLogModel] should be logged
@@ -43,37 +49,33 @@ interface PermissionManager {
      * @return true or false
      */
     fun shouldLogNetworkCall(networkCallLogModel: NetworkCallLogModel): Boolean
-
-    /**
-     * Should api call logs be encrypted?
-     * @return true if read is false
-     */
-    fun shouldEncryptApiLog(): Boolean
     // endregion Api Logs
 
     // region Crash Logs
     /**
-     * Test if [exception] should be logged to the repository
+     * Test if [throwable] should be logged to the repository
      */
     fun shouldLogExceptions(throwable: Throwable): Boolean
-
-    /**
-     * Should crash logs be encrypted?
-     * @return true if read is false
-     */
-    fun shouldEncryptCrashReports(): Boolean
     // endregion Crash Logs
 
     // region Analytics
-    fun shouldLogAnalytics(destination: String, eventName: String, data: Map<String, Any?>): Boolean
-
-    fun shouldEncryptAnalytics() : Boolean
+    /**
+     * Tests if an analytics event should be logged by the system
+     * Checks:
+     * - Common analytics enabled flag
+     * - Destination name
+     * - Event Name
+     * - data map
+     */
+    fun shouldLogAnalytics(
+        destination: String,
+        eventName: String,
+        data: Map<String, Any?>
+    ): Boolean
     // endregion Analytics
 
     // region Generic Logs
     fun shouldLogGenericLog(type : Int, tag : String, message : String): Boolean
-
-    fun shouldEncryptGenericLogs() : Boolean
     // endregion Generic Logs
 
 

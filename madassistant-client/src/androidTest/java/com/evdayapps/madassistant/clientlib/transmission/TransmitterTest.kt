@@ -124,7 +124,7 @@ class TransmitterTest {
         every { permissionManager.shouldLogAnalytics(any(), any(), any()) } returns true
 
         // Unencrypted
-        every { permissionManager.shouldEncryptAnalytics() } returns false
+        every { permissionManager.shouldEncryptLogs() } returns false
         transmitter.logAnalyticsEvent(
             destination = "Fake Destination",
             eventName = "Fake Event Name",
@@ -141,7 +141,7 @@ class TransmitterTest {
         }
 
         // Encrypted
-        every { permissionManager.shouldEncryptAnalytics() } returns true
+        every { permissionManager.shouldEncryptLogs() } returns true
         transmitter.logAnalyticsEvent(
             destination = "Fake Destination",
             eventName = "Fake Event Name",

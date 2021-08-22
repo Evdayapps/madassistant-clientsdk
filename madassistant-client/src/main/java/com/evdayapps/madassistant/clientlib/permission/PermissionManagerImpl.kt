@@ -66,42 +66,42 @@ class PermissionManagerImpl(
                 // Network Calls Regex
                 val flags = Pattern.MULTILINE and Pattern.CASE_INSENSITIVE
                 patternNetworkCallMethod =
-                    permissions.networkCalls?.filterMethod
+                    permissions.networkCalls.filterMethod
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternNetworkCallUrl =
-                    permissions.networkCalls?.filterUrl
+                    permissions.networkCalls.filterUrl
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternAnalyticsDestination =
-                    permissions.analytics?.filterDestination
+                    permissions.analytics.filterDestination
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternAnalyticsName =
-                    permissions.analytics?.filterEventName
+                    permissions.analytics.filterEventName
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternAnalyticsParams =
-                    permissions.analytics?.filterParamData
+                    permissions.analytics.filterParamData
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternGenericLogsTag =
-                    permissions.genericLogs?.filterTag
+                    permissions.genericLogs.filterTag
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternGenericLogsMessage =
-                    permissions.genericLogs?.filterMessage
+                    permissions.genericLogs.filterMessage
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
                 patternExceptionsType =
-                    permissions.exceptions?.filterType
+                    permissions.exceptions.filterType
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
                 patternExceptionsMessage =
-                    permissions.exceptions?.filterMessage
+                    permissions.exceptions.filterMessage
                         ?.takeIf { it.isNotBlank() }
                         ?.toPattern(flags)
 
@@ -136,6 +136,12 @@ class PermissionManagerImpl(
     }
 
     /**
+     * Should api call logs be encrypted?
+     * @return true if read is false
+     */
+    override fun shouldEncryptLogs(): Boolean = permissions?.encrypted == true
+
+    /**
      * Test if [networkCallLogModel] should be logged
      * Checks the api permissions within permission model
      *
@@ -167,12 +173,6 @@ class PermissionManagerImpl(
     }
 
     /**
-     * Should api call logs be encrypted?
-     * @return true if read is false
-     */
-    override fun shouldEncryptApiLog(): Boolean = permissions?.networkCalls?.read != true
-
-    /**
      * Test if [exception] should be logged to the repository
      */
     override fun shouldLogExceptions(throwable: Throwable): Boolean {
@@ -198,12 +198,6 @@ class PermissionManagerImpl(
 
         return true
     }
-
-    /**
-     * Should crash logs be encrypted?
-     * @return true if read is false
-     */
-    override fun shouldEncryptCrashReports(): Boolean = false
 
     // region Analytics
     override fun shouldLogAnalytics(
@@ -240,8 +234,6 @@ class PermissionManagerImpl(
 
         return true
     }
-
-    override fun shouldEncryptAnalytics(): Boolean = permissions?.analytics?.read != true
     // endregion Analytics
 
     // region Generic Logs
@@ -280,7 +272,5 @@ class PermissionManagerImpl(
 
         return true
     }
-
-    override fun shouldEncryptGenericLogs(): Boolean = permissions?.genericLogs?.read != true
     // endregion Generic Logs
 }

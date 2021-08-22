@@ -28,9 +28,9 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  *                            This is to prevent MITM attacks where a third party could impersonate
  *                            the repository's application Id
  *
- * @property cipher An instance of [MADAssistantCipher]. Auto created, if not provided
+ * @property cipher And optional implementation of [MADAssistantCipher]
  *
- * @property connectionManager An instance of [ConnectionManager]. Auto-created if not provided
+ * @property connectionManager Optional implementation of [ConnectionManager]
  *
  * @property permissionManager An instance of [PermissionManager]. Auto-created if not provided
  *

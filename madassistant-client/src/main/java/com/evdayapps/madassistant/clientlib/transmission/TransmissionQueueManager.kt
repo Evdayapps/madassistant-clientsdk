@@ -95,12 +95,17 @@ class TransmissionQueueManager(
                 data.toString().take(256)
             }"
         )
-        _clientHandler.sendMessage(
-            _clientHandler.obtainMessage(
-                type,
-                data
+
+        try {
+            _clientHandler.sendMessage(
+                _clientHandler.obtainMessage(
+                    type,
+                    data
+                )
             )
-        )
+        } catch (ex: Exception) {
+            logUtils?.e(ex)
+        }
     }
 
     /**
@@ -115,6 +120,7 @@ class TransmissionQueueManager(
             TAG,
             "handleMessage: state: ${connectionManager.currentState} message: $message"
         )
+
         when (connectionManager.currentState) {
             // If the client is connected/disconnecting, send the message
             ConnectionState.Connected,
