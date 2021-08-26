@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
-import android.content.pm.Signature
 import android.os.Build
 import android.os.IBinder
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
@@ -206,7 +205,7 @@ class ConnectionManager(
         logUtils?.i(TAG, "Starting new session")
 
         val sessionId: Long = repositoryServiceAIDL?.startSession()!!
-        repositoryServiceAIDL?.updateChangelog(false, sessionId)
+        repositoryServiceAIDL?.updatePackageInfo(sessionId)
 
         logUtils?.i(TAG, "Started new session $sessionId")
 
