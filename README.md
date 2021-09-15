@@ -20,9 +20,6 @@ The library currently provides logging for the following types of events:
 - Exceptions and Crashes
 - Generics Logs
 
-### Shared Preferences Viewer
-- TODO
-
 ## Why use it?
 ### Product Owners
 - Logging of analytics events and network calls aid in audit and debugging of issues
@@ -31,7 +28,7 @@ The library currently provides logging for the following types of events:
 ### Developers
 - Enable developers to retrieve logs for a particular issue without having to replicate the issue on their end, which might be impossible in some cases.
 ### End Users
-- This library may even be integrated into production builds, to enable debugging of hard-to-reproduce issues happening on a client's device
+- This library may even be integrated into production builds, to enable debugging of hard-to-reproduce issues happening on a client's device.
 
 
 ## Security
@@ -67,18 +64,30 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
   ```
   val client = MADAssistantClientImpl(
     applicationContext = context,
-    passphrase = "<your passphrase here>",
-    logUtils = object : com.evdayapps.madassistant.clientlib.utils.LogUtils {
-        // This is optional. Use it if you wish to view logs from the library
-	override fun d(tag: String, message: String) = Log.d(tag, message)
-	override fun e(throwable: Throwable) = throwable.printStackTrace()
-	override fun i(tag: String, message: String) = Log.i(tag, message)
-    }
+    passphrase = "<your passphrase here. This is used to authenticate the user. This is not shared with the repository and is used only within the sdk>",
+    // Optional logging system
+    logUtils = object : object : LogUtils {
+            override fun i(tag: String, message: String) {
+                Log.i(tag, message)
+            }
+
+            override fun v(tag: String, message: String) {
+                Log.v(tag, message)
+            }
+
+            override fun d(tag: String, message: String) {
+                Log.d(tag, message)
+            }
+
+            override fun e(throwable: Throwable) {
+                throwable.printStackTrace()
+            }
+        }
   )
   ```
 - Initialise the client
   ```
-  client.bindToService()
+  client.connect()
   ```
 - Log events using the appropriate method
   ```
@@ -91,8 +100,9 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
   // For logs that match android.util.Log
   fun logGenericLog(type: Int, tag: String, message: String, data: Map<String, Any?>?)
 
-  // For network logs. Alternately [MADAssistantOkHttp3Interceptor] can be used for okhttp setups
+  // For network logs. 
   fun logNetworkCall(data: NetworkCallLogModel)
+  Or use MADAssistantOkHttp3Interceptor as an interceptor in OkHttp3 setups
   ```
 - Logging Crashes
   ```
