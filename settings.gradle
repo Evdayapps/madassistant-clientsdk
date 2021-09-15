@@ -1,7 +1,7 @@
 rootProject.name='madassistant-client'
 
-include ':madassistant-client'
-include ':madassistant-client-adapter-okhttp3'
+include ':lib'
+include ':adapter-okhttp3'
 include ':testapp'
 
 //include ':madassistant-common'

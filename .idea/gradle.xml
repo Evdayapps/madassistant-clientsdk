@@ -11,8 +11,8 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/madassistant-client" />
-            <option value="$PROJECT_DIR$/madassistant-client-adapter-okhttp3" />
+            <option value="$PROJECT_DIR$/adapter-okhttp3" />
+            <option value="$PROJECT_DIR$/lib" />
             <option value="$PROJECT_DIR$/testapp" />
           </set>
         </option>
