@@ -10,7 +10,7 @@ This is the SDK for integration in client applications.
 - By providing a means to store and view these logs, it aims to provide diagnostic information to debug any issues that arise in a client app.</br>
 
 ### Companion App Screenshots
-<img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690291-d61c1200-d871-11eb-8b5f-98b8e19cb0b3.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690296-d7e5d580-d871-11eb-847c-cb4920aca976.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690302-d9170280-d871-11eb-8a6e-c8ce1c766478.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690309-da482f80-d871-11eb-923e-eea441e91615.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690315-dae0c600-d871-11eb-85b9-4d2271b14682.png"> <img width="150" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123690320-db795c80-d871-11eb-97c1-14d01275fdb6.png">
+<img width="150" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/home.png"> <img width="150" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/device_info.png"> <img width="150" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/session_list.png"> <img width="150" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/package_info.png"> <img width="150" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/log_list.png"> <img width="150" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/logdetails_network.png"> <img width="150" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/logdetails_crash.png">
 
 ## Features
 ### Logging
@@ -39,7 +39,7 @@ An auth-token based system that controls what logs the user may view based on:
 This information is encrypted using a passphrase which needs to provided to this library on runtime, to decrypt.</br>
 All filtering is performed within the client library and then sent to the MADAssistant app
 
-<img width="200" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123684638-5723db00-d86b-11eb-818e-5b39c1640bd7.png"> <img width="200" alt="portfolio_view" src="https://user-images.githubusercontent.com/3502209/123684642-58ed9e80-d86b-11eb-9393-f817ce6ad96f.png"></br>
+<img width="150" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/authtoken_generator.png"></br>
 
 NOTE: These logs are not uploaded to any server and will remain only on the user's device until they share it.
 
