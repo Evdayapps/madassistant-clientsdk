@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'kotlin-android'
+    id 'maven-publish'
 }
 
 android {
@@ -40,4 +41,21 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:3.14.9")
 
     implementation project(path: ':lib')
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = 'com.github.shannon-rodricks'
+                artifactId = 'final'
+                version = rootProject.ext.versionName
+            }
+        }
+    }
 }
