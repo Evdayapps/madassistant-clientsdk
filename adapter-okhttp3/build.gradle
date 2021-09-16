@@ -53,7 +53,7 @@ afterEvaluate {
 
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'com.github.shannon-rodricks'
-                artifactId = 'final'
+                artifactId = 'adapter-okhttp3'
                 version = rootProject.ext.versionName
             }
         }
