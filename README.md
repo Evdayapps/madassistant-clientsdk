@@ -56,9 +56,7 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
   ```
 - Add the library as a dependency
   ```
-  implementation 'com.github.shannon-rodricks:madassistant-clientsdk:madassistant-client:0.0.12'
-  // This is required to utilise an OkHttp Interceptor that will log network calls
-  implementation 'com.github.shannon-rodricks:madassistant-clientsdk:madassistant-client-adapter-okhttp3:0.0.12'
+  implementation 'com.github.shannon-rodricks:madassistant-clientsdk:0.0.16'
   ```
 - Create an instance of MADAssistantClient
   ```
