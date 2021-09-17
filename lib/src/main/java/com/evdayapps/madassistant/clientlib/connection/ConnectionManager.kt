@@ -65,14 +65,12 @@ class ConnectionManager(
      * Attempt a connection to the repository service
      */
     fun bindToService() {
-        if (BuildConfig.DEBUG) {
-            logUtils?.i(
-                TAG,
-                "bindToService: $REPO_SERVICE_CLASS package: $REPO_SERVICE_PACKAGE"
-            )
-        }
+        logUtils?.i(
+            TAG,
+            "Attempting binding to service $REPO_SERVICE_CLASS"
+        )
 
-        currentState = ConnectionState.Connecting
+        setConnectionState(ConnectionState.Connecting)
 
         val intent = Intent()
         intent.setClassName(REPO_SERVICE_PACKAGE, REPO_SERVICE_CLASS)
@@ -93,6 +91,14 @@ class ConnectionManager(
         )
 
         logUtils?.i(TAG, "bindToService: ${if (success) "Successful" else "Failed"}")
+        if(!success) {
+            disconnect(404, "Service not found")
+        }
+    }
+
+    fun setConnectionState(state : ConnectionState) {
+        logUtils?.i(TAG,"Connection State changed to $state")
+        this.currentState = state
     }
 
     /**
@@ -159,12 +165,12 @@ class ConnectionManager(
     }
 
     fun disconnect(code: Int, message: String?) {
-        currentState = ConnectionState.Disconnected
+        setConnectionState(ConnectionState.Disconnected)
         repositoryServiceAIDL?.disconnect(code, message)
     }
 
     private fun unbindService() {
-        currentState = ConnectionState.Disconnected
+        setConnectionState(ConnectionState.Disconnected)
         applicationContext.unbindService(this)
     }
 
@@ -180,7 +186,7 @@ class ConnectionManager(
      */
     override fun onServiceDisconnected(name: ComponentName?) {
         logUtils?.i(TAG, "Service disconnected")
-        currentState = ConnectionState.Disconnected
+        setConnectionState(ConnectionState.Disconnected)
         repositoryServiceAIDL = null
     }
 

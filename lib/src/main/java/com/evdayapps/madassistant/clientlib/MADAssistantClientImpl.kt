@@ -112,7 +112,7 @@ class MADAssistantClientImpl(
         when (errorMessage) {
             null -> {
                 logUtils?.i(TAG, "Handshake successful. Starting session")
-                connectionManager.currentState = ConnectionState.Connected
+                connectionManager.setConnectionState(ConnectionState.Connected)
                 startSession()
             }
             else -> {
