@@ -2,7 +2,6 @@ package com.evdayapps.madassistant.clientlib.transmission
 
 import androidx.annotation.VisibleForTesting
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
-import com.evdayapps.madassistant.clientlib.connection.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
@@ -48,22 +47,15 @@ class Transmitter(
     // endregion State
 
     // region Session Management
-    fun startSession(sessionId: Long) {
-        this.sessionId = sessionId
-    }
-
     /**
      * Initiate the disconnection process
      */
-    fun disconnect(code: Int, message: String?) {
-        connectionManager.currentState = ConnectionState.Disconnecting
-        endSession()
-        connectionManager.disconnect(code = code, message = message)
-    }
-
-    fun endSession() {
-        connectionManager.endSession()
-        this.sessionId = null
+    fun disconnect(code: Int, message: String?, processMessageQueue: Boolean) {
+        connectionManager.disconnect(
+            code = code,
+            message = message,
+            processMessageQueue = if (processMessageQueue) !queueManager.isQueueEmpty() else false
+        )
     }
     // endregion Session Management
 
@@ -119,7 +111,6 @@ class Transmitter(
             )
 
             val model = TransmissionModel(
-                sessionId = sessionId!!,
                 transmissionId = transmissionId,
                 timestamp = timestamp,
                 encrypted = encrypted,
@@ -176,6 +167,16 @@ class Transmitter(
 
             connectionManager.transmit(segment)
         }
+
+        // If the connection state is DISCONNECTING and the queue is clear, change the state to
+        // DISCONNECTED
+        if (connectionManager.isDisconnecting() && queueManager.isQueueEmpty()) {
+            connectionManager.disconnect(
+                code = -1,
+                message = "Client Disconnected",
+                processMessageQueue = false
+            )
+        }
     }
     // endregion Logging: Common
 
@@ -187,6 +188,7 @@ class Transmitter(
         queueManager.addMessageToQueue(
             type = MADAssistantTransmissionType.NetworkCall,
             timestamp = data.requestTimestamp,
+            sessionId = sessionId,
             first = data
         )
     }
@@ -212,6 +214,10 @@ class Transmitter(
     // endregion Logging: Network
 
     // region Logging: Crash Reports
+    /**
+     * Immediately send the crash report to the repository
+     * TODO: Process the message queue?
+     */
     fun logCrashReport(throwable: Throwable) {
         _processException(
             MessageData(
@@ -229,6 +235,7 @@ class Transmitter(
     fun logException(throwable: Throwable) {
         queueManager.addMessageToQueue(
             type = MADAssistantTransmissionType.Exception,
+            sessionId = sessionId,
             first = throwable,
             second = false,
         )
@@ -273,6 +280,7 @@ class Transmitter(
         queueManager.addMessageToQueue(
             type = MADAssistantTransmissionType.Analytics,
             first = destination,
+            sessionId = sessionId,
             second = eventName,
             third = data
         )
@@ -317,6 +325,7 @@ class Transmitter(
     ) {
         queueManager.addMessageToQueue(
             type = MADAssistantTransmissionType.GenericLogs,
+            sessionId = sessionId,
             first = type,
             second = tag,
             third = message,

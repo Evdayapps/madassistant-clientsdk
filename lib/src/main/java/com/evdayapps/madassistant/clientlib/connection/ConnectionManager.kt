@@ -10,7 +10,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
-import com.evdayapps.madassistant.common.BuildConfig
 import com.evdayapps.madassistant.common.MADAssistantClientAIDL
 import com.evdayapps.madassistant.common.MADAssistantConstants
 import com.evdayapps.madassistant.common.MADAssistantRepositoryAIDL
@@ -91,8 +90,13 @@ class ConnectionManager(
         )
 
         logUtils?.i(TAG, "bindToService: ${if (success) "Successful" else "Failed"}")
+
         if(!success) {
-            disconnect(404, "Service not found")
+            disconnect(
+                code = 404,
+                message = "Service not found",
+                processMessageQueue = false
+            )
         }
     }
 
@@ -164,9 +168,13 @@ class ConnectionManager(
         }
     }
 
-    fun disconnect(code: Int, message: String?) {
-        setConnectionState(ConnectionState.Disconnected)
-        repositoryServiceAIDL?.disconnect(code, message)
+    fun disconnect(code: Int, message: String?, processMessageQueue: Boolean = false) {
+        if(processMessageQueue && currentState == ConnectionState.Connected) {
+            setConnectionState(ConnectionState.Disconnecting)
+        } else {
+            setConnectionState(ConnectionState.Disconnected)
+            repositoryServiceAIDL?.disconnect(code, message)
+        }
     }
 
     private fun unbindService() {
@@ -197,30 +205,13 @@ class ConnectionManager(
         try {
             logUtils?.i(TAG, "initialising handshake...")
             repositoryServiceAIDL?.initiateHandshake(
-                MADAssistantConstants.LibraryVersion,
+                MADAssistantConstants.AIDLVersion,
                 this
             )
         } catch (ex: Exception) {
             logUtils?.e(ex)
             callback?.validateHandshakeReponse(null)
         }
-    }
-
-    // region Session Management
-    fun startSession(): Long {
-        logUtils?.i(TAG, "Starting new session")
-
-        val sessionId: Long = repositoryServiceAIDL?.startSession()!!
-        repositoryServiceAIDL?.updatePackageInfo(sessionId)
-
-        logUtils?.i(TAG, "Started new session $sessionId")
-
-        return sessionId
-    }
-
-    fun endSession() {
-        logUtils?.i(TAG, "Ending session")
-        repositoryServiceAIDL?.endSession()
     }
     // endregion Session Management
 
@@ -290,5 +281,7 @@ class ConnectionManager(
             }
         }
     }
+
+    fun isDisconnecting(): Boolean = currentState == ConnectionState.Disconnecting
     // endregion Utils
 }
