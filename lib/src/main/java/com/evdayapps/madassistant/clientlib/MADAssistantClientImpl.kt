@@ -92,10 +92,23 @@ class MADAssistantClientImpl(
     // region Connection Management
     override fun connect() = connectionManager.bindToService()
 
-    override fun disconnect(message: String?) = internalDisconnect(-1, message)
+    override fun disconnect(message: String?) = internalDisconnect(
+        code = -1,
+        message = message,
+        processMessageQueue = true
+    )
 
-    private fun internalDisconnect(code: Int, message: String?) =
-        transmitter.disconnect(code = code, message = message)
+    /**
+     * @param code The disonnection reason code to send to the repository
+     * @param message The disconnection reason message to send to the repository
+     * @param processMessageQueue Whether the message queue should be cleared(sent) before disconnecting
+     */
+    private fun internalDisconnect(code: Int, message: String?, processMessageQueue: Boolean) =
+        transmitter.disconnect(
+            code = code,
+            message = message,
+            processMessageQueue = processMessageQueue
+        )
 
     override fun validateHandshakeReponse(response: HandshakeResponseModel?) {
         val errorMessage: String? = when {
@@ -112,27 +125,15 @@ class MADAssistantClientImpl(
         when (errorMessage) {
             null -> {
                 logUtils?.i(TAG, "Handshake successful. Starting session")
-                connectionManager.currentState = ConnectionState.Connected
-                startSession()
+                connectionManager.setConnectionState(ConnectionState.Connected)
             }
             else -> {
                 logUtils?.i(TAG, "Handshake failed. Reason: $errorMessage")
-                internalDisconnect(code = 401, message = errorMessage)
+                internalDisconnect(code = 401, message = errorMessage, processMessageQueue = false)
             }
         }
     }
     // endregion Connection Management
-
-    // region Session Management
-    override fun startSession() {
-        val sessionId = connectionManager.startSession()
-        transmitter.startSession(sessionId)
-    }
-
-    override fun endSession() {
-        transmitter.endSession()
-    }
-    // endregion Session Management
 
     // region Logging
     override fun logNetworkCall(data: NetworkCallLogModel) = transmitter.logNetworkCall(

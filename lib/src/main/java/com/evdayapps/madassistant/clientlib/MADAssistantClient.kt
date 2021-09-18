@@ -35,25 +35,6 @@ interface MADAssistantClient {
     fun logCrashes()
 
     /**
-     * Helper method to start a new session
-     *
-     * This should ideally not be called explicitly
-     * since its called when the handshake is successful
-     *
-     * Should only be used after a preceding [endSession] call
-     */
-    fun startSession()
-
-    /**
-     * Helper method to end a session
-     *
-     * Stops all logging and marks a session as ended
-     *
-     * Need not be used in general usage
-     */
-    fun endSession()
-
-    /**
      * Log a network api call in the repository
      *
      * @param data An instance of [NetworkCallLogModel].

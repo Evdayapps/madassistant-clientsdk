@@ -3,9 +3,9 @@ package com.evdayapps.madassistant.clientlib.transmission
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
-import androidx.annotation.VisibleForTesting
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.connection.ConnectionState
+import com.evdayapps.madassistant.clientlib.transmission.TransmissionQueueManager.Callback
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
 
@@ -19,7 +19,7 @@ import com.evdayapps.madassistant.common.MADAssistantTransmissionType
  */
 class TransmissionQueueManager(
     private val connectionManager: ConnectionManager,
-    private val handler : Handler? = null,
+    private val handler: Handler? = null,
     private val logUtils: LogUtils? = null
 ) : Handler.Callback {
 
@@ -48,6 +48,7 @@ class TransmissionQueueManager(
     internal fun addMessageToQueue(
         type: Int,
         timestamp: Long = System.currentTimeMillis(),
+        sessionId: Long?,
         first: Any? = null,
         second: Any? = null,
         third: Any? = null,
@@ -147,6 +148,16 @@ class TransmissionQueueManager(
 
     fun setCallback(callback: Callback) {
         this.callback = callback
+    }
+
+    fun isQueueEmpty(): Boolean {
+        return when {
+            handler?.hasMessages(MADAssistantTransmissionType.NetworkCall) == true -> false
+            handler?.hasMessages(MADAssistantTransmissionType.Analytics) == true -> false
+            handler?.hasMessages(MADAssistantTransmissionType.Exception) == true -> false
+            handler?.hasMessages(MADAssistantTransmissionType.GenericLogs) == true -> false
+            else -> true
+        }
     }
 
 

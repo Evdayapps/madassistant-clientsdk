@@ -10,7 +10,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
-import com.evdayapps.madassistant.common.BuildConfig
 import com.evdayapps.madassistant.common.MADAssistantClientAIDL
 import com.evdayapps.madassistant.common.MADAssistantConstants
 import com.evdayapps.madassistant.common.MADAssistantRepositoryAIDL
@@ -65,14 +64,12 @@ class ConnectionManager(
      * Attempt a connection to the repository service
      */
     fun bindToService() {
-        if (BuildConfig.DEBUG) {
-            logUtils?.i(
-                TAG,
-                "bindToService: $REPO_SERVICE_CLASS package: $REPO_SERVICE_PACKAGE"
-            )
-        }
+        logUtils?.i(
+            TAG,
+            "Attempting binding to service $REPO_SERVICE_CLASS"
+        )
 
-        currentState = ConnectionState.Connecting
+        setConnectionState(ConnectionState.Connecting)
 
         val intent = Intent()
         intent.setClassName(REPO_SERVICE_PACKAGE, REPO_SERVICE_CLASS)
@@ -93,6 +90,19 @@ class ConnectionManager(
         )
 
         logUtils?.i(TAG, "bindToService: ${if (success) "Successful" else "Failed"}")
+
+        if(!success) {
+            disconnect(
+                code = 404,
+                message = "Service not found",
+                processMessageQueue = false
+            )
+        }
+    }
+
+    fun setConnectionState(state : ConnectionState) {
+        logUtils?.i(TAG,"Connection State changed to $state")
+        this.currentState = state
     }
 
     /**
@@ -158,13 +168,17 @@ class ConnectionManager(
         }
     }
 
-    fun disconnect(code: Int, message: String?) {
-        currentState = ConnectionState.Disconnected
-        repositoryServiceAIDL?.disconnect(code, message)
+    fun disconnect(code: Int, message: String?, processMessageQueue: Boolean = false) {
+        if(processMessageQueue && currentState == ConnectionState.Connected) {
+            setConnectionState(ConnectionState.Disconnecting)
+        } else {
+            setConnectionState(ConnectionState.Disconnected)
+            repositoryServiceAIDL?.disconnect(code, message)
+        }
     }
 
     private fun unbindService() {
-        currentState = ConnectionState.Disconnected
+        setConnectionState(ConnectionState.Disconnected)
         applicationContext.unbindService(this)
     }
 
@@ -180,7 +194,7 @@ class ConnectionManager(
      */
     override fun onServiceDisconnected(name: ComponentName?) {
         logUtils?.i(TAG, "Service disconnected")
-        currentState = ConnectionState.Disconnected
+        setConnectionState(ConnectionState.Disconnected)
         repositoryServiceAIDL = null
     }
 
@@ -191,30 +205,13 @@ class ConnectionManager(
         try {
             logUtils?.i(TAG, "initialising handshake...")
             repositoryServiceAIDL?.initiateHandshake(
-                MADAssistantConstants.LibraryVersion,
+                MADAssistantConstants.AIDLVersion,
                 this
             )
         } catch (ex: Exception) {
             logUtils?.e(ex)
             callback?.validateHandshakeReponse(null)
         }
-    }
-
-    // region Session Management
-    fun startSession(): Long {
-        logUtils?.i(TAG, "Starting new session")
-
-        val sessionId: Long = repositoryServiceAIDL?.startSession()!!
-        repositoryServiceAIDL?.updatePackageInfo(sessionId)
-
-        logUtils?.i(TAG, "Started new session $sessionId")
-
-        return sessionId
-    }
-
-    fun endSession() {
-        logUtils?.i(TAG, "Ending session")
-        repositoryServiceAIDL?.endSession()
     }
     // endregion Session Management
 
@@ -284,5 +281,7 @@ class ConnectionManager(
             }
         }
     }
+
+    fun isDisconnecting(): Boolean = currentState == ConnectionState.Disconnecting
     // endregion Utils
 }
