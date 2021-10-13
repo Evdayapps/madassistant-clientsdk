@@ -23,13 +23,13 @@ class TestActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_simple)
-        findViewById<View>(R.id.btnANR).setOnTouchListener { _, _ ->
+        /*findViewById<View>(R.id.btnANR).setOnTouchListener { _, _ ->
             var i = 1
             while (true) {
                 i++
             }
             false
-        }
+        }*/
 
         initMADAssistant()
     }
