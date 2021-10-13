@@ -20,7 +20,7 @@ The library currently provides logging for the following types of events:
 - Exceptions and Crashes
 - Generics Logs
 
-## Why use it?
+## Who is it for?
 ### Product Owners
 - Logging of analytics events and network calls aid in audit and debugging of issues
 ### Testers
@@ -56,7 +56,7 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
   ```
 - Add the library as a dependency
   ```
-  implementation 'com.github.shannon-rodricks:madassistant-clientsdk:0.0.16'
+  implementation 'com.github.shannon-rodricks:madassistant-clientsdk:0.0.17'
   ```
 - Create an instance of MADAssistantClient
   ```
