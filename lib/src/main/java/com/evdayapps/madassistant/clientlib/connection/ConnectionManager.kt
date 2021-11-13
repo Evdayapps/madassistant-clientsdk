@@ -79,7 +79,7 @@ class ConnectionManager(
                 applicationContext,
                 10,
                 Intent(),
-                0
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_IMMUTABLE else 0
             )
         )
 
@@ -91,7 +91,7 @@ class ConnectionManager(
 
         logUtils?.i(TAG, "bindToService: ${if (success) "Successful" else "Failed"}")
 
-        if(!success) {
+        if (!success) {
             disconnect(
                 code = 404,
                 message = "Service not found",
@@ -100,8 +100,8 @@ class ConnectionManager(
         }
     }
 
-    fun setConnectionState(state : ConnectionState) {
-        logUtils?.i(TAG,"Connection State changed to $state")
+    fun setConnectionState(state: ConnectionState) {
+        logUtils?.i(TAG, "Connection State changed to $state")
         this.currentState = state
     }
 
@@ -134,8 +134,8 @@ class ConnectionManager(
             serviceSignatures = getSignatureList(applicationContext, packageName)
         )
 
-        when (errorMessage) {
-            null -> {
+        when {
+            errorMessage.isNullOrBlank() -> {
                 logUtils?.i(TAG, "Repository validated. Initiating handshake..")
                 repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
                 initHandshake()
@@ -169,7 +169,7 @@ class ConnectionManager(
     }
 
     fun disconnect(code: Int, message: String?, processMessageQueue: Boolean = false) {
-        if(processMessageQueue && currentState == ConnectionState.Connected) {
+        if (processMessageQueue && currentState == ConnectionState.Connected) {
             setConnectionState(ConnectionState.Disconnecting)
         } else {
             setConnectionState(ConnectionState.Disconnected)
