@@ -164,7 +164,7 @@ class ConnectionManager(
             servicePackageName.isNullOrBlank() -> "Invalid package name"
             repositorySignature.isBlank() -> null
             serviceSignatures.any { it.equals(repositorySignature, ignoreCase = true) } -> null
-            else -> ""
+            else -> "Invalid repository signature"
         }
     }
 
