@@ -97,7 +97,7 @@ class TransmitterTest {
             )
         )
 
-        transmitter.startSession(sessionId = System.currentTimeMillis())
+        transmitter.startSession()
     }
 
     @Test

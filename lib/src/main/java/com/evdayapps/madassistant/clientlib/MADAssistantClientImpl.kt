@@ -90,7 +90,14 @@ class MADAssistantClientImpl(
     }
 
     // region Connection Management
-    override fun connect() = connectionManager.bindToService()
+    /**
+     * - Initiates a connection to the repository service
+     * - Also starts a new session, so that logs are tagged accordingly
+     */
+    override fun connect() {
+        transmitter.startSession(resumeExistingSession = false)
+        connectionManager.bindToService()
+    }
 
     override fun disconnect(message: String?) = internalDisconnect(
         code = -1,
@@ -103,14 +110,17 @@ class MADAssistantClientImpl(
      * @param message The disconnection reason message to send to the repository
      * @param processMessageQueue Whether the message queue should be cleared(sent) before disconnecting
      */
-    private fun internalDisconnect(code: Int, message: String?, processMessageQueue: Boolean) =
-        transmitter.disconnect(
-            code = code,
-            message = message,
-            processMessageQueue = processMessageQueue
-        )
+    private fun internalDisconnect(
+        code: Int,
+        message: String?,
+        processMessageQueue: Boolean
+    ) = transmitter.disconnect(
+        code = code,
+        message = message,
+        processMessageQueue = processMessageQueue
+    )
 
-    override fun validateHandshakeReponse(response: HandshakeResponseModel?) {
+    override fun validateHandshakeResponse(response: HandshakeResponseModel?) {
         val errorMessage: String? = when {
             response?.successful == true -> permissionManager.setAuthToken(
                 string = response.authToken,
@@ -126,6 +136,7 @@ class MADAssistantClientImpl(
             null -> {
                 logUtils?.i(TAG, "Handshake successful. Starting session")
                 connectionManager.setConnectionState(ConnectionState.Connected)
+                transmitter.startSession(resumeExistingSession = true)
             }
             else -> {
                 logUtils?.i(TAG, "Handshake failed. Reason: $errorMessage")
@@ -134,6 +145,19 @@ class MADAssistantClientImpl(
         }
     }
     // endregion Connection Management
+
+    // region Session Management
+    /**
+     * Start a new session
+     * All logs need to be encapsulated within a session
+     */
+    override fun startSession() = transmitter.startSession(resumeExistingSession = false)
+
+    /**
+     * End an ongoing session
+     */
+    override fun endSession() = transmitter.endSession()
+    // endregion Session Management
 
     // region Logging
     override fun logNetworkCall(data: NetworkCallLogModel) = transmitter.logNetworkCall(

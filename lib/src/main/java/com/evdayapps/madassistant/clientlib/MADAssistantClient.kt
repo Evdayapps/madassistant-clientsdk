@@ -15,6 +15,7 @@ interface MADAssistantClient {
 
     /**
      * Attempt to connect to the service in the MADAssistant app
+     * The default implementation also starts a new session, so that no logs are lost
      */
     fun connect()
 
@@ -26,6 +27,19 @@ interface MADAssistantClient {
      * transmits all logs in the queue and then disconnects from the service
      */
     fun disconnect(message: String?)
+
+    // region Sessions
+    /**
+     * Start a new session
+     * All logs need to be encapsulated within a session
+     */
+    fun startSession()
+
+    /**
+     * End an ongoing session
+     */
+    fun endSession()
+    // endregion Sessions
 
     /**
      * Add the client to the tree of Unhandled exception handlers

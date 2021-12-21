@@ -4,5 +4,5 @@ include ':lib'
 include ':adapter-okhttp3'
 include ':testapp'
 
-//include ':madassistant-common'
-//project(':madassistant-common').projectDir = file("../madassistant-common/madassistant-common")
+include ':madassistant-common'
+project(':madassistant-common').projectDir = file("../madassistant-common/madassistant-common")

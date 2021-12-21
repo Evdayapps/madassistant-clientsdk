@@ -8,6 +8,7 @@ import com.evdayapps.madassistant.clientlib.connection.ConnectionState
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionQueueManager.Callback
 import com.evdayapps.madassistant.clientlib.utils.LogUtils
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
+import java.util.*
 
 /**
  * Usecase for queue management.
@@ -40,6 +41,8 @@ class TransmissionQueueManager(
 
     private var callback: Callback? = null
 
+    private val cacheTable : Hashtable<Int, MessageData> = Hashtable()
+
     /**
      * Add a new message to the queue
      * @param type The type of the log. One of [MADAssistantTransmissionType]
@@ -48,7 +51,7 @@ class TransmissionQueueManager(
     internal fun addMessageToQueue(
         type: Int,
         timestamp: Long = System.currentTimeMillis(),
-        sessionId: Long?,
+        sessionId: Long,
         first: Any? = null,
         second: Any? = null,
         third: Any? = null,
@@ -61,15 +64,18 @@ class TransmissionQueueManager(
                     val data = MessageData(
                         timestamp = timestamp,
                         threadName = Thread.currentThread().name,
+                        sessionId = sessionId,
                         first = first,
                         second = second,
                         third = third,
                         fourth = fourth
                     )
+                    val key = "$type:$timestamp".hashCode()
+                    cacheTable.put(key, data)
 
                     queueMessage(
                         type = type,
-                        data = data
+                        key = key
                     )
                 } catch (ex: Exception) {
                     logUtils?.e(ex)
@@ -89,20 +95,17 @@ class TransmissionQueueManager(
      * Since the system is not yet ready to send the message (and not disconnecting/disconnected),
      * Queue the message again so its sent when the system is ready
      */
-    internal fun queueMessage(type: Int, data: Any) {
+    internal fun queueMessage(type: Int, key: Int) {
         logUtils?.v(
             TAG,
             "queueMessage: state: ${connectionManager.currentState} type: $type data: ${
-                data.toString().take(256)
+                key.toString().take(256)
             }"
         )
 
         try {
             _clientHandler.sendMessage(
-                _clientHandler.obtainMessage(
-                    type,
-                    data
-                )
+                _clientHandler.obtainMessage(type).apply { arg1 = key }
             )
         } catch (ex: Exception) {
             logUtils?.e(ex)
@@ -125,15 +128,20 @@ class TransmissionQueueManager(
         when (connectionManager.currentState) {
             // If the client is connected/disconnecting, send the message
             ConnectionState.Connected,
-            ConnectionState.Disconnecting -> callback?.processMessage(
-                message.what,
-                message.obj as MessageData
-            )
+            ConnectionState.Disconnecting -> {
+                val data = cacheTable[message.arg1]
+                callback?.processMessage(
+                    type = message.what,
+                    data = data as MessageData
+                )
+
+                cacheTable.remove(message.arg1)
+            }
 
             // The client is not yet ready to send messages, requeue the message
             ConnectionState.Connecting -> queueMessage(
                 type = message.what,
-                data = message.obj
+                key = message.arg1
             )
 
             // If the client is disconnected or none, drop the message

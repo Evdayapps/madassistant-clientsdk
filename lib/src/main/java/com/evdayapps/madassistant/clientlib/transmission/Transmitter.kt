@@ -38,7 +38,7 @@ class Transmitter(
         const val MAX_PAYLOAD_SIZE = 900 * 1024
     }
 
-    private var sessionId: Long? = null
+    private var sessionId: Long = -1L
 
     init {
         queueManager.setCallback(this)
@@ -56,6 +56,36 @@ class Transmitter(
             message = message,
             processMessageQueue = if (processMessageQueue) !queueManager.isQueueEmpty() else false
         )
+    }
+
+    // region Session Management
+    /**
+     * Begins a new session
+     *
+     * - Ends any ongoing session
+     * - Creates a new session id
+     * -
+     *
+     * @param resumeExistingSession Dont start a new session but resume a new session
+     */
+    fun startSession(resumeExistingSession: Boolean) {
+        if(!resumeExistingSession) {
+            // End any existing session
+            if (sessionId != -1L) {
+                endSession()
+            }
+
+            // Set a new session Id
+            this.sessionId = System.currentTimeMillis()
+        }
+
+        // Inform the repository
+        connectionManager.startSession(sessionId)
+    }
+
+    fun endSession() {
+        connectionManager.endSession(sessionId)
+        this.sessionId = -1
     }
     // endregion Session Management
 
@@ -87,6 +117,7 @@ class Transmitter(
     private fun jsonToSegments(
         json: String,
         type: Int,
+        sessionId: Long,
         encrypted: Boolean
     ): List<TransmissionModel> {
         val transmissionId = UUID.randomUUID().toString()
@@ -112,6 +143,7 @@ class Transmitter(
 
             val model = TransmissionModel(
                 transmissionId = transmissionId,
+                sessionId = sessionId,
                 timestamp = timestamp,
                 encrypted = encrypted,
                 numTotalSegments = numSegments,
@@ -137,6 +169,7 @@ class Transmitter(
     internal fun transmit(
         json: String,
         type: Int,
+        sessionId: Long,
         timestamp: Long,
         encrypt: Boolean
     ) {
@@ -146,10 +179,11 @@ class Transmitter(
             else -> json
         }
 
-        // Split the payload into segments to accomodate maximum Bundle limit
+        // Split the payload into segments to accommodate maximum Bundle limit
         val segments = jsonToSegments(
             json = transmitJson,
             type = type,
+            sessionId = sessionId,
             encrypted = encrypt
         )
 
@@ -185,12 +219,14 @@ class Transmitter(
      * Add a network call to the processing queue
      */
     fun logNetworkCall(data: NetworkCallLogModel) {
-        queueManager.addMessageToQueue(
-            type = MADAssistantTransmissionType.NetworkCall,
-            timestamp = data.requestTimestamp,
-            sessionId = sessionId,
-            first = data
-        )
+        if (sessionId != -1L) {
+            queueManager.addMessageToQueue(
+                type = MADAssistantTransmissionType.NetworkCall,
+                timestamp = data.requestTimestamp,
+                sessionId = sessionId,
+                first = data
+            )
+        }
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -203,6 +239,7 @@ class Transmitter(
                 transmit(
                     json = json,
                     type = MADAssistantTransmissionType.NetworkCall,
+                    sessionId = data.sessionId,
                     timestamp = data.timestamp,
                     encrypt = permissionManager.shouldEncryptLogs()
                 )
@@ -219,26 +256,31 @@ class Transmitter(
      * TODO: Process the message queue?
      */
     fun logCrashReport(throwable: Throwable) {
-        _processException(
-            MessageData(
-                timestamp = System.currentTimeMillis(),
-                threadName = Thread.currentThread().name,
-                first = throwable,
-                second = true
+        if (sessionId != -1L) {
+            _processException(
+                MessageData(
+                    timestamp = System.currentTimeMillis(),
+                    threadName = Thread.currentThread().name,
+                    sessionId = sessionId,
+                    first = throwable,
+                    second = true
+                )
             )
-        )
+        }
     }
 
     /**
      * Adds an exception to the queue
      */
     fun logException(throwable: Throwable) {
-        queueManager.addMessageToQueue(
-            type = MADAssistantTransmissionType.Exception,
-            sessionId = sessionId,
-            first = throwable,
-            second = false,
-        )
+        if (sessionId != -1L) {
+            queueManager.addMessageToQueue(
+                type = MADAssistantTransmissionType.Exception,
+                sessionId = sessionId,
+                first = throwable,
+                second = false,
+            )
+        }
     }
 
     /**
@@ -258,6 +300,7 @@ class Transmitter(
                 transmit(
                     json = json,
                     type = MADAssistantTransmissionType.Exception,
+                    sessionId = messageData.sessionId,
                     timestamp = messageData.timestamp,
                     encrypt = permissionManager.shouldEncryptLogs()
                 )
@@ -277,13 +320,15 @@ class Transmitter(
         eventName: String,
         data: Map<String, Any?>
     ) {
-        queueManager.addMessageToQueue(
-            type = MADAssistantTransmissionType.Analytics,
-            first = destination,
-            sessionId = sessionId,
-            second = eventName,
-            third = data
-        )
+        if(sessionId != -1L) {
+            queueManager.addMessageToQueue(
+                type = MADAssistantTransmissionType.Analytics,
+                first = destination,
+                sessionId = sessionId,
+                second = eventName,
+                third = data
+            )
+        }
     }
 
     /**
@@ -297,6 +342,7 @@ class Transmitter(
             if (permissionManager.shouldLogAnalytics(destination, eventName, data)) {
                 transmit(
                     type = MADAssistantTransmissionType.Analytics,
+                    sessionId = messageData.sessionId,
                     encrypt = permissionManager.shouldEncryptLogs(),
                     timestamp = messageData.timestamp,
                     json = AnalyticsEventModel(
@@ -323,14 +369,16 @@ class Transmitter(
         message: String,
         data: Map<String, Any?>?
     ) {
-        queueManager.addMessageToQueue(
-            type = MADAssistantTransmissionType.GenericLogs,
-            sessionId = sessionId,
-            first = type,
-            second = tag,
-            third = message,
-            fourth = data,
-        )
+        if(this.sessionId != -1L) {
+            queueManager.addMessageToQueue(
+                type = MADAssistantTransmissionType.GenericLogs,
+                sessionId = sessionId,
+                first = type,
+                second = tag,
+                third = message,
+                fourth = data,
+            )
+        }
     }
 
     private fun _processGenericLog(messageData: MessageData) {
@@ -350,6 +398,7 @@ class Transmitter(
 
                 transmit(
                     type = MADAssistantTransmissionType.GenericLogs,
+                    sessionId = messageData.sessionId,
                     encrypt = permissionManager.shouldEncryptLogs(),
                     timestamp = messageData.timestamp,
                     json = payload.toJsonObject().toString(0)

@@ -40,21 +40,13 @@ class ConnectionManager(
          *
          * @param response The handshake response model, null if failed
          */
-        fun validateHandshakeReponse(response: HandshakeResponseModel?)
+        fun validateHandshakeResponse(response: HandshakeResponseModel?)
     }
 
     var currentState: ConnectionState = ConnectionState.None
 
     private var callback: Callback? = null
     private var repositoryServiceAIDL: MADAssistantRepositoryAIDL? = null
-
-    /**
-     * Async callback for the repository to return the handshake response
-     * @param data Instance of [HandshakeResponseModel]
-     */
-    override fun onHandshakeResponse(data: HandshakeResponseModel?) {
-        callback?.validateHandshakeReponse(data)
-    }
 
     fun setCallback(callback: Callback) {
         this.callback = callback
@@ -169,11 +161,14 @@ class ConnectionManager(
     }
 
     fun disconnect(code: Int, message: String?, processMessageQueue: Boolean = false) {
-        if (processMessageQueue && currentState == ConnectionState.Connected) {
-            setConnectionState(ConnectionState.Disconnecting)
-        } else {
-            setConnectionState(ConnectionState.Disconnected)
-            repositoryServiceAIDL?.disconnect(code, message)
+        when {
+            processMessageQueue && currentState == ConnectionState.Connected -> {
+                setConnectionState(ConnectionState.Disconnecting)
+            }
+            else -> {
+                setConnectionState(ConnectionState.Disconnected)
+                repositoryServiceAIDL?.disconnect(code, message)
+            }
         }
     }
 
@@ -198,6 +193,7 @@ class ConnectionManager(
         repositoryServiceAIDL = null
     }
 
+    // region Handshake
     /**
      * Performs the handshake with the repository
      */
@@ -210,8 +206,28 @@ class ConnectionManager(
             )
         } catch (ex: Exception) {
             logUtils?.e(ex)
-            callback?.validateHandshakeReponse(null)
+            callback?.validateHandshakeResponse(null)
         }
+    }
+
+    /**
+     * Async callback for the repository to return the handshake response
+     * @param data Instance of [HandshakeResponseModel]
+     */
+    override fun onHandshakeResponse(data: HandshakeResponseModel?) {
+        callback?.validateHandshakeResponse(data)
+    }
+    // endregion Handshake
+
+    // region Session Management
+    fun startSession(sessionId : Long) {
+        if(currentState == ConnectionState.Connected) {
+            repositoryServiceAIDL?.startSession(sessionId)
+        }
+    }
+
+    fun endSession(sessionId : Long) {
+        repositoryServiceAIDL?.endSession(sessionId)
     }
     // endregion Session Management
 
