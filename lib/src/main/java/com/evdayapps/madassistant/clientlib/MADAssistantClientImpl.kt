@@ -2,65 +2,61 @@ package com.evdayapps.madassistant.clientlib
 
 import android.content.Context
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
-import com.evdayapps.madassistant.clientlib.connection.ConnectionState
+import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
 import com.evdayapps.madassistant.clientlib.transmission.Transmitter
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.transmission.TransmitterImpl
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipherImpl
-import com.evdayapps.madassistant.common.models.handshake.HandshakeResponseModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
  * An implementation of [MADAssistantClient]
  * @property applicationContext The application context
- *
  * @property passphrase The encryption passphrase for the client
- *
- * @property logUtils Instance of [LogUtils]
- *
+ * @property logger Instance of [Logger]
  * @property ignoreDeviceIdCheck Should this instance allow logging even if device id check fails?
  *                            This is utilised to generate a single auth-token for multiple users.
  *                            NOT RECOMMENDED!
- *
  * @property repositorySignature The SHA-256 signature of the MADAssistant repository.
  *                            This is to prevent MITM attacks where a third party could impersonate
  *                            the repository's application Id
- *
  * @property cipher And optional implementation of [MADAssistantCipher]
- *
- * @property connectionManager Optional implementation of [ConnectionManager]
- *
+ * @property connectionManager Optional implementation of [ConnectionManagerImpl]
  * @property permissionManager An instance of [PermissionManager]. Auto-created if not provided
- *
  * @property transmitter An instance of [TransmissionManager]. Auto-created if not provided
  */
 class MADAssistantClientImpl(
     private val applicationContext: Context,
     private val passphrase: String,
-    private val logUtils: LogUtils? = null,
+    private val logger: Logger? = null,
     private val repositorySignature: String = DEFAULT_SIGNATURE,
     private val ignoreDeviceIdCheck: Boolean = false,
     // Components
-    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(passPhrase = passphrase),
-    private val connectionManager: ConnectionManager = ConnectionManager(
-        applicationContext = applicationContext,
-        logUtils = logUtils,
-        repositorySignature = repositorySignature
+    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(
+        passPhrase = passphrase
     ),
     private val permissionManager: PermissionManager = PermissionManagerImpl(
         cipher = cipher,
-        logUtils = logUtils,
+        logger = logger,
         ignoreDeviceIdCheck = ignoreDeviceIdCheck
     ),
-    private val transmitter: Transmitter = Transmitter(
+    private val connectionManager: ConnectionManager = ConnectionManagerImpl(
+        applicationContext = applicationContext,
+        logger = logger,
+        repositorySignature = repositorySignature,
+        permissionManager = permissionManager,
+    ),
+    private val transmitter: Transmitter = TransmitterImpl(
         cipher = cipher,
         permissionManager = permissionManager,
         connectionManager = connectionManager,
-        logUtils = logUtils
-    )
-) : MADAssistantClient, ConnectionManager.Callback {
+        logger = logger
+    ),
+    private val callback: MADAssistantClient.Callback
+) : MADAssistantClient, ConnectionManager.Callback, Transmitter.Callback {
 
     companion object {
         private const val TAG = "MADAssistantClientImpl"
@@ -74,6 +70,7 @@ class MADAssistantClientImpl(
 
     init {
         connectionManager.setCallback(this)
+        transmitter.setCallback(this)
     }
 
     override fun logCrashes() {
@@ -90,50 +87,46 @@ class MADAssistantClientImpl(
     }
 
     // region Connection Management
-    override fun connect() = connectionManager.bindToService()
+    /**
+     * - Initiates a connection to the repository service
+     * - Also starts a new session, so that logs are tagged accordingly
+     */
+    override fun connect() = connectionManager.connect()
 
-    override fun disconnect(message: String?) = internalDisconnect(
-        code = -1,
-        message = message,
-        processMessageQueue = true
+    override fun disconnect() = transmitter.disconnect(
+        code = 200,
+        message = "Client requested disconnection"
     )
 
-    /**
-     * @param code The disonnection reason code to send to the repository
-     * @param message The disconnection reason message to send to the repository
-     * @param processMessageQueue Whether the message queue should be cleared(sent) before disconnecting
-     */
-    private fun internalDisconnect(code: Int, message: String?, processMessageQueue: Boolean) =
-        transmitter.disconnect(
-            code = code,
-            message = message,
-            processMessageQueue = processMessageQueue
-        )
+    override fun onConnected() {
+        callback.onConnected()
+    }
 
-    override fun validateHandshakeReponse(response: HandshakeResponseModel?) {
-        val errorMessage: String? = when {
-            response?.successful == true -> permissionManager.setAuthToken(
-                string = response.authToken,
-                deviceIdentifier = response.deviceIdentifier
-            )
-
-            response?.errorMessage?.isNotBlank() == true -> response.errorMessage
-
-            else -> "Unknown"
-        }
-
-        when (errorMessage) {
-            null -> {
-                logUtils?.i(TAG, "Handshake successful. Starting session")
-                connectionManager.setConnectionState(ConnectionState.Connected)
-            }
-            else -> {
-                logUtils?.i(TAG, "Handshake failed. Reason: $errorMessage")
-                internalDisconnect(code = 401, message = errorMessage, processMessageQueue = false)
-            }
-        }
+    override fun onDisconnected(code: Int, message: String) {
+        callback.onDisconnected(code = code, message = message)
     }
     // endregion Connection Management
+
+    // region Session Management
+    /**
+     * Start a new session
+     * All logs need to be encapsulated within a session
+     */
+    override fun startSession() = transmitter.startSession()
+
+    override fun onSessionStarted(sessionId: Long) {
+        callback.onSessionStarted(sessionId = sessionId)
+    }
+
+    /**
+     * End an ongoing session
+     */
+    override fun endSession() = transmitter.endSession()
+
+    override fun onSessionEnded(sessionId: Long) {
+        callback.onSessionEnded(sessionId = sessionId)
+    }
+    // endregion Session Management
 
     // region Logging
     override fun logNetworkCall(data: NetworkCallLogModel) = transmitter.logNetworkCall(
