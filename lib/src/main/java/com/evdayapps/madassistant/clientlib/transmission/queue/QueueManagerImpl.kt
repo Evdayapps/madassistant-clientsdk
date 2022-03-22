@@ -1,37 +1,29 @@
-package com.evdayapps.madassistant.clientlib.transmission
+package com.evdayapps.madassistant.clientlib.transmission.queue
 
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
-import com.evdayapps.madassistant.clientlib.connection.ConnectionState
-import com.evdayapps.madassistant.clientlib.transmission.TransmissionQueueManager.Callback
+import com.evdayapps.madassistant.clientlib.transmission.MessageData
 import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
 import java.util.*
 
 /**
- * Usecase for queue management.
+ * Log queue management
  *
  * Responsibilities:
  * - Add logs to the queue (with proper checks prior)
  * - Deque logs from queue and check if they need to be transmitted, requeued or discarded
  * - Call [Callback.processMessage] as required
  */
-class TransmissionQueueManager(
+class QueueManagerImpl(
     private val connectionManager: ConnectionManager,
     private val handler: Handler? = null,
     private val logger: Logger? = null
-) : Handler.Callback {
+) : QueueManager, Handler.Callback {
 
     private val TAG = "MADAssist.QueueManager"
-
-    interface Callback {
-        fun processMessage(
-            type: Int,
-            data: MessageData
-        )
-    }
 
     private var _clientThreadHandler: HandlerThread = HandlerThread(TAG).apply { start() }
 
@@ -39,27 +31,27 @@ class TransmissionQueueManager(
         handler ?: Handler(_clientThreadHandler.looper, this)
     }
 
-    private var callback: Callback? = null
+    private var callback: QueueManager.Callback? = null
 
-    private val cacheTable : Hashtable<Int, MessageData> = Hashtable()
+    private val cacheTable: Hashtable<Int, MessageData> = Hashtable()
 
     /**
      * Add a new message to the queue
      * @param type The type of the log. One of [MADAssistantTransmissionType]
      * @param data The payload for the log
      */
-    internal fun addMessageToQueue(
+    override fun addMessageToQueue(
         type: Int,
-        timestamp: Long = System.currentTimeMillis(),
+        timestamp: Long,
         sessionId: Long,
-        first: Any? = null,
-        second: Any? = null,
-        third: Any? = null,
-        fourth: Any? = null
+        first: Any?,
+        second: Any?,
+        third: Any?,
+        fourth: Any?
     ) {
         when (connectionManager.currentState) {
-            ConnectionState.Connecting,
-            ConnectionState.Connected -> {
+            ConnectionManager.State.Connecting,
+            ConnectionManager.State.Connected -> {
                 try {
                     val data = MessageData(
                         timestamp = timestamp,
@@ -82,9 +74,9 @@ class TransmissionQueueManager(
                 }
             }
 
-            ConnectionState.None,
-            ConnectionState.Disconnecting,
-            ConnectionState.Disconnected -> {
+            ConnectionManager.State.None,
+            ConnectionManager.State.Disconnecting,
+            ConnectionManager.State.Disconnected -> {
                 // Don't add any new messages to the queue,
                 // since we've already received a disconnect signal
             }
@@ -127,10 +119,10 @@ class TransmissionQueueManager(
 
         when (connectionManager.currentState) {
             // If the client is connected/disconnecting, send the message
-            ConnectionState.Connected,
-            ConnectionState.Disconnecting -> {
+            ConnectionManager.State.Connected,
+            ConnectionManager.State.Disconnecting -> {
                 val data = cacheTable[message.arg1]
-                callback?.processMessage(
+                callback?.processQueuedMessage(
                     type = message.what,
                     data = data as MessageData
                 )
@@ -139,14 +131,14 @@ class TransmissionQueueManager(
             }
 
             // The client is not yet ready to send messages, requeue the message
-            ConnectionState.Connecting -> queueMessage(
+            ConnectionManager.State.Connecting -> queueMessage(
                 type = message.what,
                 key = message.arg1
             )
 
             // If the client is disconnected or none, drop the message
-            ConnectionState.None,
-            ConnectionState.Disconnected -> {
+            ConnectionManager.State.None,
+            ConnectionManager.State.Disconnected -> {
                 // Drop the message
             }
         }
@@ -154,11 +146,11 @@ class TransmissionQueueManager(
         return true
     }
 
-    fun setCallback(callback: Callback) {
+    override fun setCallback(callback: QueueManager.Callback) {
         this.callback = callback
     }
 
-    fun isQueueEmpty(): Boolean {
+    override fun isQueueEmpty(): Boolean {
         return when {
             handler?.hasMessages(MADAssistantTransmissionType.NetworkCall) == true -> false
             handler?.hasMessages(MADAssistantTransmissionType.Analytics) == true -> false

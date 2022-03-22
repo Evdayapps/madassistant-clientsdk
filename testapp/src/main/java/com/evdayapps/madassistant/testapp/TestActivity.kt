@@ -57,7 +57,17 @@ class TestActivity : AppCompatActivity() {
             applicationContext = applicationContext,
             repositorySignature = "",
             passphrase = "test",
-            logUtils = logUtils
+            logger = logUtils,
+            callback = object : MADAssistantClient.Callback {
+                override fun onSessionStarted(sessionId: Long) {}
+
+                override fun onSessionEnded(sessionId: Long) {}
+
+                override fun onConnected() {}
+
+                override fun onDisconnected(code: Int, message: String) {}
+
+            }
         )
 
         // Bind the client to the remote service

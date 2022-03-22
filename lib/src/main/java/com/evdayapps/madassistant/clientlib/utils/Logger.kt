@@ -1,7 +1,5 @@
 package com.evdayapps.madassistant.clientlib.utils
 
-import com.evdayapps.madassistant.clientlib.connection.ConnectionState
-
 interface Logger {
 
     fun i(tag: String, message: String)
@@ -11,6 +9,4 @@ interface Logger {
     fun d(tag: String, message: String)
 
     fun e(throwable: Throwable)
-
-    fun onConnectionStateChanged(state : ConnectionState)
 }

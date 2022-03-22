@@ -1,10 +1,10 @@
-package com.evdayapps.madassistant.clientlib.transmission
+package com.evdayapps.madassistant.clientlib.transmission.queue
 
 import android.os.Handler
 import android.os.Message
 import android.util.Log
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
-import com.evdayapps.madassistant.clientlib.connection.ConnectionState
+import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
 import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
 import io.mockk.*
@@ -12,17 +12,17 @@ import io.mockk.impl.annotations.MockK
 import org.junit.Before
 import org.junit.Test
 
-class TransmissionQueueManagerTest {
+class QueueManagerTest {
 
     @MockK
-    lateinit var connectionManager: ConnectionManager
+    lateinit var connectionManager: ConnectionManagerImpl
 
     lateinit var logger: Logger
 
-    lateinit var queueManager: TransmissionQueueManager
+    lateinit var queueManager: QueueManagerImpl
 
     @MockK
-    lateinit var callback: TransmissionQueueManager.Callback
+    lateinit var callback: QueueManager.Callback
 
     lateinit var handler: Handler
 
@@ -61,10 +61,10 @@ class TransmissionQueueManagerTest {
         }
 
         queueManager = spyk(
-            objToCopy = TransmissionQueueManager(
+            objToCopy = QueueManagerImpl(
                 connectionManager = connectionManager,
                 handler = handler,
-                logUtils = logger
+                logger = logger
             ),
             recordPrivateCalls = true
         )
@@ -79,9 +79,13 @@ class TransmissionQueueManagerTest {
      */
     @Test
     fun queueHandlingForNoneState() {
-        every { connectionManager.currentState } returns ConnectionState.None
+        every { connectionManager.currentState } returns ConnectionManager.State.None
 
-        queueManager.addMessageToQueue(MADAssistantTransmissionType.Analytics, first = "Test")
+        queueManager.addMessageToQueue(
+            MADAssistantTransmissionType.Analytics,
+            first = "Test",
+            sessionId = System.currentTimeMillis()
+        )
         verify(exactly = 0) { queueManager.queueMessage(any(), any()) }
     }
 
@@ -92,11 +96,15 @@ class TransmissionQueueManagerTest {
      */
     @Test(timeout = 20000)
     fun queueHandlingWhenConnectingState() {
-        every { connectionManager.currentState } returns ConnectionState.Connecting
-        queueManager.addMessageToQueue(MADAssistantTransmissionType.Analytics, first = "Test")
+        every { connectionManager.currentState } returns ConnectionManager.State.Connecting
+        queueManager.addMessageToQueue(
+            MADAssistantTransmissionType.Analytics,
+            first = "Test",
+            sessionId = System.currentTimeMillis()
+        )
         verify(atLeast = 1) { queueManager.addMessageToQueue(any(), any(), any(), any(), any()) }
         verify(atLeast = 1) { queueManager.queueMessage(any(), any()) }
-        verify(exactly = 0) { callback.processMessage(any(), any()) }
+        verify(exactly = 0) { callback.processQueuedMessage(any(), any()) }
     }
 
     /**
@@ -106,13 +114,17 @@ class TransmissionQueueManagerTest {
      */
     @Test
     fun queueHandlingWhenConnectedState() {
-        every { connectionManager.currentState } returns ConnectionState.Connected
+        every { connectionManager.currentState } returns ConnectionManager.State.Connected
 
-        queueManager.addMessageToQueue(MADAssistantTransmissionType.Analytics, first = "Test")
+        queueManager.addMessageToQueue(
+            MADAssistantTransmissionType.Analytics,
+            first = "Test",
+            sessionId = System.currentTimeMillis()
+        )
 
         verify(exactly = 1) { queueManager.handleMessage(any()) }
         verify(exactly = 1) { queueManager.queueMessage(any(), any()) }
-        verify(exactly = 1) { callback.processMessage(any(), any()) }
+        verify(exactly = 1) { callback.processQueuedMessage(any(), any()) }
     }
 
 }

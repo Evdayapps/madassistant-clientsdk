@@ -31,7 +31,7 @@ interface MADAssistantClient {
      * [com.evdayapps.madassistant.clientlib.transmission.TransmissionManager] instance that
      * transmits all logs in the queue and then disconnects from the service
      */
-    fun disconnect(message: String?)
+    fun disconnect()
 
     // region Sessions
     /**
@@ -75,6 +75,7 @@ interface MADAssistantClient {
      * Log an analytics event in the system
      *
      * Ideal usage: Post sending the payload to the correct destination
+     *
      * @param destination The analytics platform that it is being sent to (GA/Firebase/Inhouse)
      * @param eventName The name of the event
      * @param data The payload for the event
