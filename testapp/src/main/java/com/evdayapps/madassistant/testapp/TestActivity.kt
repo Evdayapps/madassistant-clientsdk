@@ -59,11 +59,15 @@ class TestActivity : AppCompatActivity() {
             passphrase = "test",
             logger = logUtils,
             callback = object : MADAssistantClient.Callback {
-                override fun onSessionStarted(sessionId: Long) {}
+                override fun onSessionStarted(sessionId: Long) {
+                    Log.i("MADAssistant","Session Started")
+                }
 
                 override fun onSessionEnded(sessionId: Long) {}
 
-                override fun onConnected() {}
+                override fun onConnected() {
+                    Log.i("MADAssistant","Connected")
+                }
 
                 override fun onDisconnected(code: Int, message: String) {}
 
@@ -72,6 +76,9 @@ class TestActivity : AppCompatActivity() {
 
         // Bind the client to the remote service
         madAssistantClient.connect()
+        madAssistantClient.startSession()
+        madAssistantClient.logGenericLog(Log.INFO,"Test","Just a test")
+
 
         madAssistantClient.logCrashes()
     }

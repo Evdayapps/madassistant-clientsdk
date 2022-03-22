@@ -26,6 +26,8 @@ interface Transmitter {
         fun onSessionEnded(sessionId: Long)
     }
 
+    fun setCallback(callback: Callback)
+
     /**
      * Start a new session
      * Default implementation ends any ongoing session before starting a new session

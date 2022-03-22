@@ -31,8 +31,7 @@ class TransmitterImpl(
     private val queueManager: QueueManager = QueueManagerImpl(
         connectionManager = connectionManager,
         logger = logger
-    ),
-    private var callback: Transmitter.Callback? = null
+    )
 ) : Transmitter, QueueManager.Callback {
 
     private val TAG = "MADAssist.Transmitter"
@@ -43,11 +42,17 @@ class TransmitterImpl(
 
     private var sessionId: Long = -1L
 
+    private var _callback: Transmitter.Callback? = null
+
     init {
         queueManager.setCallback(this)
     }
 
     // endregion State
+
+    override fun setCallback(callback: Transmitter.Callback) {
+        this._callback = callback
+    }
 
     // region Session Management
     /**
@@ -75,20 +80,23 @@ class TransmitterImpl(
             endSession()
         }
 
-        // Set a new session Id
-        this.sessionId = System.currentTimeMillis()
+        // Only start a new session if the connection is connected or connecting
+        if(connectionManager.isConnectedOrConnecting()) {
+            // Set a new session Id
+            this.sessionId = System.currentTimeMillis()
 
-        // Inform the repository
-        if (connectionManager.isConnected()) {
-            connectionManager.startSession(sessionId)
+            // Inform the repository
+            if (connectionManager.isConnected()) {
+                connectionManager.startSession(sessionId)
+            }
+
+            _callback?.onSessionStarted(sessionId)
         }
-
-        callback?.onSessionStarted(sessionId)
     }
 
     override fun endSession() {
         connectionManager.endSession(sessionId)
-        callback?.onSessionEnded(sessionId)
+        _callback?.onSessionEnded(sessionId)
         sessionId = -1
     }
     // endregion Session Management

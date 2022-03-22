@@ -63,5 +63,10 @@ interface ConnectionManager {
      */
     fun isConnected(): Boolean
 
+    /**
+     * Check if the connection state is [State.Connecting] or [State.Connected]
+     */
+    fun isConnectedOrConnecting(): Boolean
+
 
 }

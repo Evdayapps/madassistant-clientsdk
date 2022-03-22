@@ -70,6 +70,7 @@ class MADAssistantClientImpl(
 
     init {
         connectionManager.setCallback(this)
+        transmitter.setCallback(this)
     }
 
     override fun logCrashes() {

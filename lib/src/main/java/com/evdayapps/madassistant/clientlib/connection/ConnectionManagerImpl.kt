@@ -90,6 +90,13 @@ class ConnectionManagerImpl(
 
     override fun isConnected(): Boolean = currentState == ConnectionManager.State.Connected
 
+    override fun isConnectedOrConnecting(): Boolean {
+        return when(currentState) {
+            ConnectionManager.State.Connecting, ConnectionManager.State.Connected -> true
+            else -> false
+        }
+    }
+
     /**
      * Called when a connection to the Service has been established, with
      * the [android.os.IBinder] of the communication channel to the
