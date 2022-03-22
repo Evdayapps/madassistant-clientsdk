@@ -18,15 +18,20 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  * @property passphrase The encryption passphrase for the client
  * @property logger Instance of [Logger]
  * @property ignoreDeviceIdCheck Should this instance allow logging even if device id check fails?
- *                            This is utilised to generate a single auth-token for multiple users.
- *                            NOT RECOMMENDED!
+ * This is utilised to generate a single auth-token for multiple users.
+ * NOT RECOMMENDED!
+ *
  * @property repositorySignature The SHA-256 signature of the MADAssistant repository.
  *                            This is to prevent MITM attacks where a third party could impersonate
  *                            the repository's application Id
- * @property cipher And optional implementation of [MADAssistantCipher]
+ *
+ * @property cipher Optional implementation of [MADAssistantCipher]
+ *
  * @property connectionManager Optional implementation of [ConnectionManagerImpl]
- * @property permissionManager An instance of [PermissionManager]. Auto-created if not provided
- * @property transmitter An instance of [TransmissionManager]. Auto-created if not provided
+ *
+ * @property permissionManager An instance of [PermissionManager]. Auto-created if not provided. The instance should be the same across [transmitter] and [connectionManager]
+ *
+ * @property transmitter An instance of [Transmitter]. Auto-created if not provided
  */
 class MADAssistantClientImpl(
     private val applicationContext: Context,
