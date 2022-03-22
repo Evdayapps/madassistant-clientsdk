@@ -31,8 +31,8 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     androidTestImplementation "io.mockk:mockk-android:1.12.0"
 
-    api 'com.github.shannon-rodricks:madassistant-common:0.0.10'
-    //api project(path: ':madassistant-common')
+    //api 'com.github.shannon-rodricks:madassistant-common:0.0.10'
+    api project(path: ':madassistant-common')
 }
 
 afterEvaluate {

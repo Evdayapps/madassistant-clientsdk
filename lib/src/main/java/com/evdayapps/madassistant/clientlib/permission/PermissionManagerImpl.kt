@@ -1,7 +1,7 @@
 package com.evdayapps.madassistant.clientlib.permission
 
 import android.util.Log
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import com.evdayapps.madassistant.common.models.permissions.MADAssistantPermissions
@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 
 class PermissionManagerImpl(
     private val cipher: MADAssistantCipher,
-    private val logUtils: LogUtils? = null,
+    private val logger: Logger? = null,
     private val ignoreDeviceIdCheck: Boolean = false
 ) : PermissionManager {
 
@@ -52,7 +52,7 @@ class PermissionManagerImpl(
 
                 val permissions = MADAssistantPermissions(json)
                 this.permissions = permissions
-                logUtils?.i(
+                logger?.i(
                     TAG,
                     "permissions: $permissions"
                 )

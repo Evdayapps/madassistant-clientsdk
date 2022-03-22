@@ -1,5 +1,7 @@
 package com.evdayapps.madassistant.clientlib
 
+import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
+import com.evdayapps.madassistant.clientlib.transmission.Transmitter
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
@@ -13,8 +15,12 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  */
 interface MADAssistantClient {
 
+    interface Callback : Transmitter.Callback, ConnectionManager.Callback
+
+
     /**
      * Attempt to connect to the service in the MADAssistant app
+     * The default implementation also starts a new session, so that no logs are lost
      */
     fun connect()
 
@@ -25,7 +31,20 @@ interface MADAssistantClient {
      * [com.evdayapps.madassistant.clientlib.transmission.TransmissionManager] instance that
      * transmits all logs in the queue and then disconnects from the service
      */
-    fun disconnect(message: String?)
+    fun disconnect()
+
+    // region Sessions
+    /**
+     * Start a new session
+     * All logs need to be encapsulated within a session
+     */
+    fun startSession()
+
+    /**
+     * End an ongoing session
+     */
+    fun endSession()
+    // endregion Sessions
 
     /**
      * Add the client to the tree of Unhandled exception handlers
@@ -56,6 +75,7 @@ interface MADAssistantClient {
      * Log an analytics event in the system
      *
      * Ideal usage: Post sending the payload to the correct destination
+     *
      * @param destination The analytics platform that it is being sent to (GA/Firebase/Inhouse)
      * @param eventName The name of the event
      * @param data The payload for the event

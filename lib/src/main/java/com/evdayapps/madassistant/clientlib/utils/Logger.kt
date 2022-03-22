@@ -1,6 +1,6 @@
 package com.evdayapps.madassistant.clientlib.utils
 
-interface LogUtils {
+interface Logger {
 
     fun i(tag: String, message: String)
 
@@ -9,5 +9,4 @@ interface LogUtils {
     fun d(tag: String, message: String)
 
     fun e(throwable: Throwable)
-
 }

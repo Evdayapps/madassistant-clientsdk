@@ -7,7 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.evdayapps.madassistant.adapters.okhttp3.MADAssistantOkHttp3Interceptor
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.MADAssistantClientImpl
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -35,7 +35,7 @@ class TestActivity : AppCompatActivity() {
     }
 
     private fun initMADAssistant() {
-        val logUtils = object : LogUtils {
+        val logUtils = object : Logger {
             override fun i(tag: String, message: String) {
                 Log.i(tag, message)
             }
@@ -57,11 +57,28 @@ class TestActivity : AppCompatActivity() {
             applicationContext = applicationContext,
             repositorySignature = "",
             passphrase = "test",
-            logUtils = logUtils
+            logger = logUtils,
+            callback = object : MADAssistantClient.Callback {
+                override fun onSessionStarted(sessionId: Long) {
+                    Log.i("MADAssistant","Session Started")
+                }
+
+                override fun onSessionEnded(sessionId: Long) {}
+
+                override fun onConnected() {
+                    Log.i("MADAssistant","Connected")
+                }
+
+                override fun onDisconnected(code: Int, message: String) {}
+
+            }
         )
 
         // Bind the client to the remote service
         madAssistantClient.connect()
+        madAssistantClient.startSession()
+        madAssistantClient.logGenericLog(Log.INFO,"Test","Just a test")
+
 
         madAssistantClient.logCrashes()
     }

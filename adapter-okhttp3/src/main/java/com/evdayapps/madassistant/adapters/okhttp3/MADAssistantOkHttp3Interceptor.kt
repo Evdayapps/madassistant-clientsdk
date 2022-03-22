@@ -1,7 +1,7 @@
 package com.evdayapps.madassistant.adapters.okhttp3
 
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import okhttp3.*
@@ -16,7 +16,7 @@ import java.nio.charset.Charset
 
 class MADAssistantOkHttp3Interceptor(
     private val client: MADAssistantClient,
-    private val logUtils: LogUtils? = null
+    private val logger: Logger? = null
 ) : Interceptor {
 
     companion object {
@@ -117,7 +117,7 @@ class MADAssistantOkHttp3Interceptor(
 
             client.logNetworkCall(data)
         } catch (ex: Throwable) {
-            logUtils?.e(ex)
+            logger?.e(ex)
         }
     }
 
