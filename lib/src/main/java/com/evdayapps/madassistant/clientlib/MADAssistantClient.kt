@@ -1,5 +1,7 @@
 package com.evdayapps.madassistant.clientlib
 
+import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
+import com.evdayapps.madassistant.clientlib.transmission.Transmitter
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
@@ -12,6 +14,9 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  * This interface, or the implementation, encapsulates all actions to interact with this library
  */
 interface MADAssistantClient {
+
+    interface Callback : Transmitter.Callback, ConnectionManager.Callback
+
 
     /**
      * Attempt to connect to the service in the MADAssistant app

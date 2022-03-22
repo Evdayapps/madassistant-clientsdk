@@ -3,7 +3,7 @@ package com.evdayapps.madassistant.clientlib.transmission
 import androidx.annotation.VisibleForTesting
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.models.analytics.AnalyticsEventModel
@@ -25,12 +25,23 @@ class Transmitter(
     private val cipher: MADAssistantCipher,
     private val permissionManager: PermissionManager,
     private val connectionManager: ConnectionManager,
-    private val logUtils: LogUtils? = null,
+    private val logger: Logger? = null,
     private val queueManager: TransmissionQueueManager = TransmissionQueueManager(
         connectionManager = connectionManager,
-        logUtils = logUtils
-    )
+        logger = logger
+    ),
+    private var callback: Callback? = null
 ) : TransmissionQueueManager.Callback {
+
+    interface Callback {
+
+        /**
+         *
+         */
+        fun onSessionStarted(sessionId: Long)
+
+        fun onSessionEnded(sessionId: Long)
+    }
 
     private val TAG = "MADAssist.Transmitter"
 
@@ -69,7 +80,12 @@ class Transmitter(
      * @param resumeExistingSession Dont start a new session but resume a new session
      */
     fun startSession(resumeExistingSession: Boolean) {
-        if(!resumeExistingSession) {
+        if(resumeExistingSession) {
+            if(sessionId == -1L) {
+                // Set a new session Id
+                this.sessionId = System.currentTimeMillis()
+            }
+        } else {
             // End any existing session
             if (sessionId != -1L) {
                 endSession()
@@ -81,11 +97,14 @@ class Transmitter(
 
         // Inform the repository
         connectionManager.startSession(sessionId)
+
+        callback?.onSessionStarted(sessionId)
     }
 
     fun endSession() {
         connectionManager.endSession(sessionId)
-        this.sessionId = -1
+        callback?.onSessionEnded(sessionId)
+        sessionId = -1
     }
     // endregion Session Management
 
@@ -194,7 +213,7 @@ class Transmitter(
                 segment.timestamp = timestamp
             }
 
-            logUtils?.v(
+            logger?.v(
                 TAG,
                 "transmit: type: $type, enc: $encrypt json: ${json.take(128)}"
             )
@@ -245,14 +264,14 @@ class Transmitter(
                 )
             }
         } catch (ex: Exception) {
-            logUtils?.e(ex)
+            logger?.e(ex)
         }
     }
     // endregion Logging: Network
 
     // region Logging: Crash Reports
     /**
-     * Immediately send the crash report to the repository
+     * Immediately send the crash report to the repository. This method bypasses the
      * TODO: Process the message queue?
      */
     fun logCrashReport(throwable: Throwable) {
@@ -306,7 +325,7 @@ class Transmitter(
                 )
             }
         } catch (ex: Exception) {
-            logUtils?.e(ex)
+            logger?.e(ex)
         }
     }
     // endregion Logging: Crash Reports
@@ -320,7 +339,7 @@ class Transmitter(
         eventName: String,
         data: Map<String, Any?>
     ) {
-        if(sessionId != -1L) {
+        if (sessionId != -1L) {
             queueManager.addMessageToQueue(
                 type = MADAssistantTransmissionType.Analytics,
                 first = destination,
@@ -354,7 +373,7 @@ class Transmitter(
                 )
             }
         } catch (ex: Exception) {
-            logUtils?.e(ex)
+            logger?.e(ex)
         }
     }
     // endregion Logging: Analytics
@@ -369,7 +388,7 @@ class Transmitter(
         message: String,
         data: Map<String, Any?>?
     ) {
-        if(this.sessionId != -1L) {
+        if (this.sessionId != -1L) {
             queueManager.addMessageToQueue(
                 type = MADAssistantTransmissionType.GenericLogs,
                 sessionId = sessionId,
@@ -405,7 +424,7 @@ class Transmitter(
                 )
             }
         } catch (ex: Exception) {
-            logUtils?.e(ex)
+            logger?.e(ex)
         }
     }
     // endregion Logging: Generic Logs

@@ -6,7 +6,7 @@ import com.evdayapps.madassistant.clientlib.connection.ConnectionState
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
 import com.evdayapps.madassistant.clientlib.transmission.Transmitter
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipherImpl
 import com.evdayapps.madassistant.common.models.handshake.HandshakeResponseModel
@@ -15,50 +15,45 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 /**
  * An implementation of [MADAssistantClient]
  * @property applicationContext The application context
- *
  * @property passphrase The encryption passphrase for the client
- *
- * @property logUtils Instance of [LogUtils]
- *
+ * @property logger Instance of [Logger]
  * @property ignoreDeviceIdCheck Should this instance allow logging even if device id check fails?
  *                            This is utilised to generate a single auth-token for multiple users.
  *                            NOT RECOMMENDED!
- *
  * @property repositorySignature The SHA-256 signature of the MADAssistant repository.
  *                            This is to prevent MITM attacks where a third party could impersonate
  *                            the repository's application Id
- *
  * @property cipher And optional implementation of [MADAssistantCipher]
- *
  * @property connectionManager Optional implementation of [ConnectionManager]
- *
  * @property permissionManager An instance of [PermissionManager]. Auto-created if not provided
- *
  * @property transmitter An instance of [TransmissionManager]. Auto-created if not provided
  */
 class MADAssistantClientImpl(
     private val applicationContext: Context,
     private val passphrase: String,
-    private val logUtils: LogUtils? = null,
+    private val logger: Logger? = null,
     private val repositorySignature: String = DEFAULT_SIGNATURE,
     private val ignoreDeviceIdCheck: Boolean = false,
     // Components
-    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(passPhrase = passphrase),
-    private val connectionManager: ConnectionManager = ConnectionManager(
-        applicationContext = applicationContext,
-        logUtils = logUtils,
-        repositorySignature = repositorySignature
+    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(
+        passPhrase = passphrase
     ),
     private val permissionManager: PermissionManager = PermissionManagerImpl(
         cipher = cipher,
-        logUtils = logUtils,
+        logger = logger,
         ignoreDeviceIdCheck = ignoreDeviceIdCheck
+    ),
+    private val connectionManager: ConnectionManager = ConnectionManager(
+        applicationContext = applicationContext,
+        logger = logger,
+        repositorySignature = repositorySignature,
+        permissionManager = permissionManager,
     ),
     private val transmitter: Transmitter = Transmitter(
         cipher = cipher,
         permissionManager = permissionManager,
         connectionManager = connectionManager,
-        logUtils = logUtils
+        logger = logger
     )
 ) : MADAssistantClient, ConnectionManager.Callback {
 
@@ -106,7 +101,7 @@ class MADAssistantClientImpl(
     )
 
     /**
-     * @param code The disonnection reason code to send to the repository
+     * @param code The disconnection reason code to send to the repository
      * @param message The disconnection reason message to send to the repository
      * @param processMessageQueue Whether the message queue should be cleared(sent) before disconnecting
      */
@@ -134,12 +129,12 @@ class MADAssistantClientImpl(
 
         when (errorMessage) {
             null -> {
-                logUtils?.i(TAG, "Handshake successful. Starting session")
+                logger?.i(TAG, "Handshake successful. Starting session")
                 connectionManager.setConnectionState(ConnectionState.Connected)
                 transmitter.startSession(resumeExistingSession = true)
             }
             else -> {
-                logUtils?.i(TAG, "Handshake failed. Reason: $errorMessage")
+                logger?.i(TAG, "Handshake failed. Reason: $errorMessage")
                 internalDisconnect(code = 401, message = errorMessage, processMessageQueue = false)
             }
         }

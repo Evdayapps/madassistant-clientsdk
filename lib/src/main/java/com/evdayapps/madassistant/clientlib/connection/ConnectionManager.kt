@@ -9,7 +9,8 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.permission.PermissionManager
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.MADAssistantClientAIDL
 import com.evdayapps.madassistant.common.MADAssistantConstants
 import com.evdayapps.madassistant.common.MADAssistantRepositoryAIDL
@@ -19,8 +20,9 @@ import java.security.MessageDigest
 
 class ConnectionManager(
     private val applicationContext: Context,
-    private val logUtils: LogUtils? = null,
-    private val repositorySignature: String = DEFAULT_REPO_SIGNATURE
+    private val logger: Logger? = null,
+    private val repositorySignature: String = DEFAULT_REPO_SIGNATURE,
+    private val permissionManager: PermissionManager,
 ) : ServiceConnection, MADAssistantClientAIDL.Stub() {
 
     companion object {
@@ -41,6 +43,7 @@ class ConnectionManager(
          * @param response The handshake response model, null if failed
          */
         fun validateHandshakeResponse(response: HandshakeResponseModel?)
+
     }
 
     var currentState: ConnectionState = ConnectionState.None
@@ -56,7 +59,7 @@ class ConnectionManager(
      * Attempt a connection to the repository service
      */
     fun bindToService() {
-        logUtils?.i(
+        logger?.i(
             TAG,
             "Attempting binding to service $REPO_SERVICE_CLASS"
         )
@@ -81,7 +84,7 @@ class ConnectionManager(
             Service.BIND_AUTO_CREATE
         )
 
-        logUtils?.i(TAG, "bindToService: ${if (success) "Successful" else "Failed"}")
+        logger?.i(TAG, "bindToService: ${if (success) "Successful" else "Failed"}")
 
         if (!success) {
             disconnect(
@@ -93,7 +96,7 @@ class ConnectionManager(
     }
 
     fun setConnectionState(state: ConnectionState) {
-        logUtils?.i(TAG, "Connection State changed to $state")
+        logger?.i(TAG, "Connection State changed to $state")
         this.currentState = state
     }
 
@@ -115,7 +118,7 @@ class ConnectionManager(
      * which you can now make calls on.
      */
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-        logUtils?.i(TAG, "Service connected")
+        logger?.i(TAG, "Service connected")
         onServiceConnected(name?.packageName, service)
     }
 
@@ -128,12 +131,12 @@ class ConnectionManager(
 
         when {
             errorMessage.isNullOrBlank() -> {
-                logUtils?.i(TAG, "Repository validated. Initiating handshake..")
+                logger?.i(TAG, "Repository validated. Initiating handshake..")
                 repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
                 initHandshake()
             }
             else -> {
-                logUtils?.i(TAG, "Repository invalid. Error: $errorMessage")
+                logger?.i(TAG, "Repository invalid. Error: $errorMessage")
                 unbindService()
             }
         }
@@ -188,7 +191,7 @@ class ConnectionManager(
      * connection has been lost.
      */
     override fun onServiceDisconnected(name: ComponentName?) {
-        logUtils?.i(TAG, "Service disconnected")
+        logger?.i(TAG, "Service disconnected")
         setConnectionState(ConnectionState.Disconnected)
         repositoryServiceAIDL = null
     }
@@ -199,23 +202,23 @@ class ConnectionManager(
      */
     private fun initHandshake() {
         try {
-            logUtils?.i(TAG, "initialising handshake...")
+            logger?.i(TAG, "initialising handshake...")
             repositoryServiceAIDL?.initiateHandshake(
                 MADAssistantConstants.AIDLVersion,
                 this
             )
         } catch (ex: Exception) {
-            logUtils?.e(ex)
+            logger?.e(ex)
             callback?.validateHandshakeResponse(null)
         }
     }
 
     /**
      * Async callback for the repository to return the handshake response
-     * @param data Instance of [HandshakeResponseModel]
+     * @param response Instance of [HandshakeResponseModel]
      */
-    override fun onHandshakeResponse(data: HandshakeResponseModel?) {
-        callback?.validateHandshakeResponse(data)
+    override fun onHandshakeResponse(response: HandshakeResponseModel?) {
+        callback?.validateHandshakeResponse(response)
     }
     // endregion Handshake
 
@@ -240,7 +243,7 @@ class ConnectionManager(
             try {
                 it.log(transmission)
             } catch (ex: Exception) {
-                logUtils?.e(ex)
+                logger?.e(ex)
             }
         }
     }

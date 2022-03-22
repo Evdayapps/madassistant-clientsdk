@@ -6,7 +6,7 @@ import android.os.Message
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.connection.ConnectionState
 import com.evdayapps.madassistant.clientlib.transmission.TransmissionQueueManager.Callback
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
 import java.util.*
 
@@ -21,7 +21,7 @@ import java.util.*
 class TransmissionQueueManager(
     private val connectionManager: ConnectionManager,
     private val handler: Handler? = null,
-    private val logUtils: LogUtils? = null
+    private val logger: Logger? = null
 ) : Handler.Callback {
 
     private val TAG = "MADAssist.QueueManager"
@@ -78,7 +78,7 @@ class TransmissionQueueManager(
                         key = key
                     )
                 } catch (ex: Exception) {
-                    logUtils?.e(ex)
+                    logger?.e(ex)
                 }
             }
 
@@ -96,7 +96,7 @@ class TransmissionQueueManager(
      * Queue the message again so its sent when the system is ready
      */
     internal fun queueMessage(type: Int, key: Int) {
-        logUtils?.v(
+        logger?.v(
             TAG,
             "queueMessage: state: ${connectionManager.currentState} type: $type data: ${
                 key.toString().take(256)
@@ -108,7 +108,7 @@ class TransmissionQueueManager(
                 _clientHandler.obtainMessage(type).apply { arg1 = key }
             )
         } catch (ex: Exception) {
-            logUtils?.e(ex)
+            logger?.e(ex)
         }
     }
 
@@ -120,7 +120,7 @@ class TransmissionQueueManager(
      * - Drops the message if the state is Disconnected
      */
     override fun handleMessage(message: Message): Boolean {
-        logUtils?.v(
+        logger?.v(
             TAG,
             "handleMessage: state: ${connectionManager.currentState} message: $message"
         )

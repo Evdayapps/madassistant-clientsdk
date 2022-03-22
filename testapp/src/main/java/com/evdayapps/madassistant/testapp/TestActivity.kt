@@ -7,7 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.evdayapps.madassistant.adapters.okhttp3.MADAssistantOkHttp3Interceptor
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.MADAssistantClientImpl
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -35,7 +35,7 @@ class TestActivity : AppCompatActivity() {
     }
 
     private fun initMADAssistant() {
-        val logUtils = object : LogUtils {
+        val logUtils = object : Logger {
             override fun i(tag: String, message: String) {
                 Log.i(tag, message)
             }

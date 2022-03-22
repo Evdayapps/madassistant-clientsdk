@@ -3,7 +3,7 @@ package com.evdayapps.madassistant.clientlib.transmission
 import android.util.Log
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManager
-import com.evdayapps.madassistant.clientlib.utils.LogUtils
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
@@ -26,7 +26,7 @@ class TransmitterTest {
     @MockK
     lateinit var cipher: MADAssistantCipher
 
-    lateinit var logUtils: LogUtils
+    lateinit var logger: Logger
 
     @Before
     fun setup() {
@@ -68,7 +68,7 @@ class TransmitterTest {
             )
         }
 
-        logUtils = object : LogUtils {
+        logger = object : Logger {
             override fun i(tag: String, message: String) {
                 Log.i(tag, message)
             }
@@ -93,7 +93,7 @@ class TransmitterTest {
                 connectionManager = connectionManager,
                 queueManager = transmisionQueueManager,
                 permissionManager = permissionManager,
-                logUtils = logUtils
+                logUtils = logger
             )
         )
 
