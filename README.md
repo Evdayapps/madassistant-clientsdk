@@ -80,8 +80,7 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
 
         madAssistantClient = MADAssistantClientImpl(
             applicationContext = applicationContext,
-            repositorySignature = "",
-            passphrase = "test",
+            passphrase = "<enter your passphrase here>",
             logger = logUtils,
             callback = object : MADAssistantClient.Callback {
                 override fun onSessionStarted(sessionId: Long) {
