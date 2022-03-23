@@ -60,11 +60,7 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
   ```
 - Create an instance of MADAssistantClient
   ```
-  val client = MADAssistantClientImpl(
-    applicationContext = context,
-    passphrase = "<your passphrase here. This is used to authenticate the user. This is not shared with the repository and is used only within the sdk>",
-    // Optional logging system
-    logUtils = object : object : LogUtils {
+  val logUtils = object : Logger {
             override fun i(tag: String, message: String) {
                 Log.i(tag, message)
             }
@@ -81,7 +77,32 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
                 throwable.printStackTrace()
             }
         }
-  )
+
+        madAssistantClient = MADAssistantClientImpl(
+            applicationContext = applicationContext,
+            repositorySignature = "",
+            passphrase = "test",
+            logger = logUtils,
+            callback = object : MADAssistantClient.Callback {
+                override fun onSessionStarted(sessionId: Long) {
+                    Log.i("MADAssistant","Session Started")
+                }
+
+                override fun onSessionEnded(sessionId: Long) {}
+
+                override fun onConnected() {
+                    Log.i("MADAssistant","Connected")
+                }
+
+                override fun onDisconnected(code: Int, message: String) {}
+
+            }
+        )
+
+        // Bind the client to the remote service
+        madAssistantClient.connect()
+        madAssistantClient.startSession()
+        madAssistantClient.logGenericLog(Log.INFO,"Test","Just a test")
   ```
 - Initialise the client
   ```
