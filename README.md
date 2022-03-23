@@ -108,10 +108,6 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
         // Test log
         madAssistantClient.logGenericLog(Log.INFO,"Test","Just a test")
   ```
-- Initialise the client
-  ```
-  client.connect()
-  ```
 - Log events using the appropriate method
   ```
   // For Exceptions
