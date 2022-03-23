@@ -14,7 +14,6 @@
             <option value="$PROJECT_DIR$/adapter-okhttp3" />
             <option value="$PROJECT_DIR$/lib" />
             <option value="$PROJECT_DIR$/testapp" />
-            <option value="$PROJECT_DIR$/../madassistant-common/madassistant-common" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
