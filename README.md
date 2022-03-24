@@ -56,7 +56,7 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
   ```
 - Add the library as a dependency
   ```
-  implementation 'com.github.shannon-rodricks:madassistant-clientsdk:0.0.21'
+  implementation 'com.github.shannon-rodricks:madassistant-clientsdk:0.0.23'
   ```
 - Create an instance of MADAssistantClient
   ```
