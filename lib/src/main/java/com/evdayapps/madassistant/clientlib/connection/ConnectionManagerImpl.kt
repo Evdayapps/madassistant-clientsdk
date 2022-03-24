@@ -57,13 +57,17 @@ class ConnectionManagerImpl(
         val intent = Intent()
         intent.setClassName(REPO_SERVICE_PACKAGE, REPO_SERVICE_CLASS)
         intent.putExtra(
-            "info",
+            MADAssistantConstants.KEY_EXTRA_INFO,
             PendingIntent.getActivity(
                 applicationContext,
                 10,
                 Intent(),
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_IMMUTABLE else 0
             )
+        )
+        intent.putExtra(
+            MADAssistantConstants.KEY_EXTRA_AIDL_VERSION,
+            MADAssistantConstants.AIDLVersion
         )
 
         val success = applicationContext.bindService(
@@ -91,7 +95,7 @@ class ConnectionManagerImpl(
     override fun isConnected(): Boolean = currentState == ConnectionManager.State.Connected
 
     override fun isConnectedOrConnecting(): Boolean {
-        return when(currentState) {
+        return when (currentState) {
             ConnectionManager.State.Connecting, ConnectionManager.State.Connected -> true
             else -> false
         }

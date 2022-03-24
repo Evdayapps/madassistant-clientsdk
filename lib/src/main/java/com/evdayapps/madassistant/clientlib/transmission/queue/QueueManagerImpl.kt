@@ -88,12 +88,12 @@ class QueueManagerImpl(
      * Queue the message again so its sent when the system is ready
      */
     internal fun queueMessage(type: Int, key: Int) {
-        logger?.v(
+        /*logger?.v(
             TAG,
             "queueMessage: state: ${connectionManager.currentState} type: $type data: ${
                 key.toString().take(256)
             }"
-        )
+        )*/
 
         try {
             _clientHandler.sendMessage(
@@ -112,10 +112,10 @@ class QueueManagerImpl(
      * - Drops the message if the state is Disconnected
      */
     override fun handleMessage(message: Message): Boolean {
-        logger?.v(
+        /*logger?.v(
             TAG,
             "handleMessage: state: ${connectionManager.currentState} message: $message"
-        )
+        )*/
 
         when (connectionManager.currentState) {
             // If the client is connected/disconnecting, send the message

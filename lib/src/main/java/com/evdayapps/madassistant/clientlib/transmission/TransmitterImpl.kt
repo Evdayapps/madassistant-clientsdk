@@ -13,6 +13,7 @@ import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
 import com.evdayapps.madassistant.common.models.genericlog.GenericLogModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
+import org.json.JSONArray
 import java.util.*
 
 /**
@@ -244,9 +245,34 @@ class TransmitterImpl(
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     private fun _processNetworkCall(data: MessageData) {
+
+        /**
+         * Internal method
+         * Trims the list to remove any redacted headers as per the permissions
+         */
+        fun trimRedactedHeaders(headersArray : JSONArray?) : JSONArray? {
+            if(headersArray == null) {
+                return null
+            }
+
+            val trimmed = JSONArray()
+            for(i in 0 until headersArray.length()) {
+                val item = headersArray.getJSONObject(i)
+                if(!permissionManager.shouldRedactNetworkHeader(item.keys().next())) {
+                    trimmed.put(item)
+                }
+            }
+
+            return trimmed
+        }
+
         try {
             val payload = data.first as NetworkCallLogModel
             if (permissionManager.shouldLogNetworkCall(payload)) {
+                // Redact headers as required
+                payload.requestHeaders = trimRedactedHeaders(payload.requestHeaders)
+                payload.responseHeaders = trimRedactedHeaders(payload.responseHeaders)
+
                 val json = payload.toJsonObject().toString(0)
 
                 transmit(
