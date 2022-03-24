@@ -49,6 +49,11 @@ interface PermissionManager {
      * @return true or false
      */
     fun shouldLogNetworkCall(networkCallLogModel: NetworkCallLogModel): Boolean
+
+    /**
+     * Some api call headers need to be redacted to avoid leaks of confidential information
+     */
+    fun shouldRedactNetworkHeader(header : String) : Boolean
     // endregion Api Logs
 
     // region Crash Logs

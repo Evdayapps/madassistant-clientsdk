@@ -76,7 +76,11 @@ class TestActivity : AppCompatActivity() {
 
         // Bind the client to the remote service
         madAssistantClient.connect()
+
+        // Start a session
         madAssistantClient.startSession()
+
+        // Test log
         madAssistantClient.logGenericLog(Log.INFO,"Test","Just a test")
 
 

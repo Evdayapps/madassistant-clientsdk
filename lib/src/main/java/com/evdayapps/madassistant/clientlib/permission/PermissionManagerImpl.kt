@@ -173,6 +173,13 @@ class PermissionManagerImpl(
     }
 
     /**
+     * Some api call headers need to be redacted to avoid leaks of confidential information
+     */
+    override fun shouldRedactNetworkHeader(header: String): Boolean {
+        return permissions?.networkCalls?.redactHeaders?.contains(header) ?: false
+    }
+
+    /**
      * Test if [exception] should be logged to the repository
      */
     override fun shouldLogExceptions(throwable: Throwable): Boolean {
