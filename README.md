@@ -10,7 +10,7 @@ This is the SDK for integration in client applications.
 - By providing a means to store and view these logs, it aims to provide diagnostic information to debug any issues that arise in a client app.</br>
 
 ### Companion App Screenshots
-<img width="240" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/home.png"> <img width="240" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/device_info.png"> <img width="240" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/session_list.png"> <img width="240" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/package_info.png"> <img width="240" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/log_list.png"> <img width="240" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/logdetails_network.png"> <img width="240" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/logdetails_crash.png">
+<img width="240" alt="portfolio_view" src="https://github.com/Evdayapps/madassistant-clientsdk/blob/main/doc/home.png"> <img width="240" alt="portfolio_view" src="https://github.com/Evdayapps/madassistant-clientsdk/blob/main/doc/device_info.png"> <img width="240" alt="portfolio_view" src="https://github.com/Evdayapps/madassistant-clientsdk/blob/main/doc/session_list.png"> <img width="240" alt="portfolio_view" src="https://github.com/Evdayapps/madassistant-clientsdk/blob/main/doc/package_info.png"> <img width="240" alt="portfolio_view" src="https://github.com/Evdayapps/madassistant-clientsdk/blob/main/doc/log_list.png"> <img width="240" alt="portfolio_view" src="https://github.com/Evdayapps/madassistant-clientsdk/blob/main/doc/logdetails_network.png"> <img width="240" alt="portfolio_view" src="https://github.com/Evdayapps/madassistant-clientsdk/blob/main/doc/logdetails_crash.png">
 
 ## Features
 ### Logging
@@ -39,7 +39,7 @@ An auth-token based system that controls what logs the user may view based on:
 This information is encrypted using a passphrase which needs to provided to this library on runtime, to decrypt.</br>
 All filtering is performed within the client library and then sent to the MADAssistant app
 
-<img width="240" alt="portfolio_view" src="https://github.com/shannon-rodricks/madassistant-clientsdk/blob/main/doc/authtoken_generator.png"></br>
+<img width="240" alt="portfolio_view" src="https://github.com/Evdayapps/madassistant-clientsdk/blob/main/doc/authtoken_generator.png"></br>
 
 NOTE: These logs are not uploaded to any server and will remain only on the user's device until they share it.
 
@@ -56,7 +56,7 @@ NOTE: These logs are not uploaded to any server and will remain only on the user
   ```
 - Add the library as a dependency
   ```
-  implementation 'com.github.shannon-rodricks:madassistant-clientsdk:0.0.23'
+  implementation 'com.github.Evdayapps:madassistant-clientsdk:0.0.23'
   ```
 - Create an instance of MADAssistantClient
   ```
