@@ -88,8 +88,10 @@ class ConnectionManagerImpl(
     }
 
     private fun setConnectionState(state: ConnectionManager.State) {
-        logger?.i(TAG, "Connection State changed to $state")
-        this.currentState = state
+        if(state != currentState) {
+            logger?.i(TAG, "Connection State changed to $state")
+            this.currentState = state
+        }
     }
 
     override fun isConnected(): Boolean = currentState == ConnectionManager.State.Connected
@@ -132,7 +134,7 @@ class ConnectionManagerImpl(
 
         when {
             errorMessage.isNullOrBlank() -> {
-                logger?.i(TAG, "Repository validated. Initiating handshake..")
+                logger?.i(TAG, "Repository validated")
                 repositoryServiceAIDL = MADAssistantRepositoryAIDL.Stub.asInterface(service)
                 initHandshake()
             }
@@ -172,12 +174,14 @@ class ConnectionManagerImpl(
             else -> {
                 setConnectionState(ConnectionManager.State.Disconnected)
                 repositoryServiceAIDL?.disconnect(code, message)
+                unbindService()
                 callback?.onDisconnected(code, message)
             }
         }
     }
 
     private fun unbindService() {
+        logger?.i(TAG, "Unbinding service")
         setConnectionState(ConnectionManager.State.Disconnected)
         applicationContext.unbindService(this)
     }
@@ -236,8 +240,7 @@ class ConnectionManagerImpl(
                 callback?.onConnected()
             }
             else -> {
-                setConnectionState(ConnectionManager.State.Disconnected)
-                callback?.onDisconnected(code = 401, message = "Handshake failed")
+                disconnect(code = 401, message = "AuthToken Failed")
             }
         }
     }
