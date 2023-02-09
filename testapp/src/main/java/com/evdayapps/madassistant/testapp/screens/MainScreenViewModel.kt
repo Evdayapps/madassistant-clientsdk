@@ -12,13 +12,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import kotlin.random.Random
 
+@Suppress("KotlinConstantConditions")
 class MainScreenViewModel(
     private val madAssistantClient: MADAssistantClient
 ) : ViewModel() {
 
     class NetworkCallConfig(
         val url: String,
-        val headers: Map<String, String>
+        val headers: List<Triple<String, String, Boolean>>
     )
 
 
@@ -26,9 +27,9 @@ class MainScreenViewModel(
     val networkCallConfig: MutableState<NetworkCallConfig> = mutableStateOf(
         NetworkCallConfig(
             url = "https://api.github.com/users/google/repos",
-            headers = mapOf(
-                Pair("content-type", "application-data/json"),
-                Pair("password", "2423dfsf5$232")
+            headers = listOf(
+                Triple("content-type", "application-data/json", false),
+                Triple("password", "2423dfsf5$232", false)
             )
         )
     )
@@ -47,7 +48,7 @@ class MainScreenViewModel(
                 // Make the call
                 val bldr = Request.Builder().url(networkCallConfig.value.url)
                 networkCallConfig.value.headers.forEach {
-                    bldr.addHeader(it.key, it.value)
+                    bldr.addHeader(it.first, it.second)
                 }
 
                 client.newCall(bldr.build()).execute()
@@ -60,8 +61,7 @@ class MainScreenViewModel(
 
 
     fun testCrashReport() {
-        val nullString: String = ""
-        println(nullString[4])
+        println(""[4])
     }
 
     fun testAnalytics() {
@@ -104,8 +104,7 @@ class MainScreenViewModel(
 
     fun testNonFatalException() {
         try {
-            val nullString: String = ""
-            println(nullString[4])
+            println(""[4])
         } catch (ex: Exception) {
             madAssistantClient.logException(ex)
         }

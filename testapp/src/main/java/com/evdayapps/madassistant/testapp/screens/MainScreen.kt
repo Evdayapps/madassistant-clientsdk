@@ -26,7 +26,10 @@ fun MainScreen(viewModel: MainScreenViewModel) {
             ApiCallWidget(
                 viewModel.networkCallConfig.value,
                 onRequestButtonClicked = viewModel::testApiCall,
-                onSettingsButtonClicked = {}
+                onUpdateConfig = { url, headers ->
+                    val new = MainScreenViewModel.NetworkCallConfig(url, headers)
+                    viewModel.networkCallConfig.value = new
+                }
             )
         }
     }
