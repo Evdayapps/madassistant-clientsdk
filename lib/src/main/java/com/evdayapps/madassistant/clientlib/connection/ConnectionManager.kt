@@ -64,9 +64,19 @@ interface ConnectionManager {
     fun isConnected(): Boolean
 
     /**
+     * Check if a connection is being created with the repository service
+     */
+    fun isConnecting(): Boolean
+
+    /**
      * Check if the connection state is [State.Connecting] or [State.Connected]
      */
     fun isConnectedOrConnecting(): Boolean
+
+    /**
+     * Check if the current stats is [State.Disconnecting]
+     */
+    fun isDisconnecting() : Boolean
 
 
 }

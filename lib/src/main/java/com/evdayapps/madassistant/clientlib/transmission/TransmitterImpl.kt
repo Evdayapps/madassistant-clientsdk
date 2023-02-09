@@ -133,10 +133,10 @@ class TransmitterImpl(
         json: String,
         type: Int,
         sessionId: Long,
+        timestamp: Long,
         encrypted: Boolean
     ): List<TransmissionModel> {
         val transmissionId = UUID.randomUUID().toString()
-        val timestamp = System.currentTimeMillis()
 
         val bytes = json.toByteArray(Charsets.UTF_16)
 
@@ -198,17 +198,13 @@ class TransmitterImpl(
         val segments = jsonToSegments(
             json = transmitJson,
             type = type,
+            timestamp = timestamp,
             sessionId = sessionId,
             encrypted = encrypt
         )
 
         // Transmit each segment
-        segments.forEachIndexed { index, segment ->
-            // Set the timestamp for the first segment
-            if (index == 0) {
-                segment.timestamp = timestamp
-            }
-
+        segments.forEach { segment ->
             connectionManager.transmit(segment)
 
             if (verboseLogging) {
@@ -221,7 +217,7 @@ class TransmitterImpl(
 
         // If the connection state is DISCONNECTING and the queue is clear, change the state to
         // DISCONNECTED
-        if ((connectionManager.currentState == ConnectionManager.State.Disconnecting) && queueManager.isQueueEmpty()) {
+        if (connectionManager.isDisconnecting() && queueManager.isQueueEmpty()) {
             connectionManager.disconnect(
                 code = -1,
                 message = "Client Disconnected",
@@ -294,7 +290,8 @@ class TransmitterImpl(
 
     // region Logging: Crash Reports
     /**
-     * Immediately send the crash report to the repository. This method bypasses the
+     * Immediately send the crash report to the repository. This method bypasses the queue
+     *
      * TODO: Process the message queue
      */
     override fun logCrashReport(throwable: Throwable) {
