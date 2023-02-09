@@ -83,10 +83,6 @@ class TestActivity : AppCompatActivity() {
         // Start a session
         madAssistantClient.startSession()
 
-        // Test log
-        madAssistantClient.logGenericLog(Log.INFO, "Test", "Just a test")
-
-
         madAssistantClient.logCrashes()
     }
 
