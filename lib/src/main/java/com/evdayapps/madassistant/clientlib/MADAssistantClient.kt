@@ -17,7 +17,7 @@ interface MADAssistantClient {
 
     interface Callback : Transmitter.Callback, ConnectionManager.Callback
 
-
+    // region Connection
     /**
      * Attempt to connect to the service in the MADAssistant app
      * The default implementation also starts a new session, so that no logs are lost
@@ -33,6 +33,9 @@ interface MADAssistantClient {
      */
     fun disconnect()
 
+    fun getConnectionState() : ConnectionManager.State
+    // endregion Connection
+
     // region Sessions
     /**
      * Start a new session
@@ -44,6 +47,11 @@ interface MADAssistantClient {
      * End an ongoing session
      */
     fun endSession()
+
+    /**
+     * Check if there is an active session
+     */
+    fun hasActiveSession() : Boolean
     // endregion Sessions
 
     /**

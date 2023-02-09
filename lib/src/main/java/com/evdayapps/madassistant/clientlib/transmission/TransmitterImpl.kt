@@ -29,7 +29,6 @@ class TransmitterImpl(
     private val permissionManager: PermissionManager,
     private val connectionManager: ConnectionManager,
     private val logger: Logger? = null,
-    private val verboseLogging: Boolean = false,
     private val queueManager: QueueManager = QueueManagerImpl(
         connectionManager = connectionManager,
         logger = logger
@@ -99,8 +98,14 @@ class TransmitterImpl(
     override fun endSession() {
         connectionManager.endSession(sessionId)
         _callback?.onSessionEnded(sessionId)
-        sessionId = -1
+        sessionId = -1L
     }
+
+    /**
+     * Return true if there is an active session
+     */
+    override fun hasActiveSession(): Boolean = sessionId != -1L
+
     // endregion Session Management
 
     /**
@@ -206,13 +211,10 @@ class TransmitterImpl(
         // Transmit each segment
         segments.forEach { segment ->
             connectionManager.transmit(segment)
-
-            if (verboseLogging) {
-                logger?.v(
-                    TAG,
-                    "transmit: type: $type, enc: $encrypt json: ${json.take(128)}"
-                )
-            }
+            logger?.v(
+                TAG,
+                "transmit: type: $type, enc: $encrypt json: ${json.take(128)}"
+            )
         }
 
         // If the connection state is DISCONNECTING and the queue is clear, change the state to

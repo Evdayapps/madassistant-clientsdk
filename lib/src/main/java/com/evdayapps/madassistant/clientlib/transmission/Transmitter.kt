@@ -40,6 +40,11 @@ interface Transmitter {
     fun endSession()
 
     /**
+     * Return true if there is an active session
+     */
+    fun hasActiveSession() : Boolean
+
+    /**
      * Disconnect from the repository. This method should be called instead of [ConnectionManager.disconnect] because it ensures processing of the log queue
      */
     fun disconnect(code: Int, message: String)
