@@ -54,7 +54,7 @@ interface ConnectionManager {
     fun startSession(sessionId: Long)
 
     /**
-     * Mark a session, represented by [sessionId], as ended
+     * Notify the repository that [sessionId] has ended
      */
     fun endSession(sessionId: Long)
 

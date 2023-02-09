@@ -29,6 +29,7 @@ class TransmitterImpl(
     private val permissionManager: PermissionManager,
     private val connectionManager: ConnectionManager,
     private val logger: Logger? = null,
+    private val verboseLogging: Boolean = false,
     private val queueManager: QueueManager = QueueManagerImpl(
         connectionManager = connectionManager,
         logger = logger
@@ -82,7 +83,7 @@ class TransmitterImpl(
         }
 
         // Only start a new session if the connection is connected or connecting
-        if(connectionManager.isConnectedOrConnecting()) {
+        if (connectionManager.isConnectedOrConnecting()) {
             // Set a new session Id
             this.sessionId = System.currentTimeMillis()
 
@@ -121,11 +122,12 @@ class TransmitterImpl(
     /**
      * Converts the json string (encrypted or not) to a list of [TransmissionModel] for transmission
      * Performs the following:
-     * - Generate a transmission id
-     * -
+     * - Generates a transmissionId and timestamp for the entire log
+     * - Splits the transmission into chunks if required
+     * - Returns a [TransmissionModel] for each chunk
      *
      * @param json String to send
-     * @param type One of [com.evdayapps.madassistant.common.MADAssistantTransmissionType]
+     * @param type One of [MADAssistantTransmissionType]
      */
     private fun jsonToSegments(
         json: String,
@@ -207,17 +209,18 @@ class TransmitterImpl(
                 segment.timestamp = timestamp
             }
 
-            logger?.v(
-                TAG,
-                "transmit: type: $type, enc: $encrypt json: ${json.take(128)}"
-            )
-
             connectionManager.transmit(segment)
+
+            if (verboseLogging) {
+                logger?.v(
+                    TAG,
+                    "transmit: type: $type, enc: $encrypt json: ${json.take(128)}"
+                )
+            }
         }
 
         // If the connection state is DISCONNECTING and the queue is clear, change the state to
         // DISCONNECTED
-        // TODO Shift this logic to [ConnectionManagerImpl]
         if ((connectionManager.currentState == ConnectionManager.State.Disconnecting) && queueManager.isQueueEmpty()) {
             connectionManager.disconnect(
                 code = -1,
@@ -250,15 +253,15 @@ class TransmitterImpl(
          * Internal method
          * Trims the list to remove any redacted headers as per the permissions
          */
-        fun trimRedactedHeaders(headersArray : JSONArray?) : JSONArray? {
-            if(headersArray == null) {
+        fun trimRedactedHeaders(headersArray: JSONArray?): JSONArray? {
+            if (headersArray == null) {
                 return null
             }
 
             val trimmed = JSONArray()
-            for(i in 0 until headersArray.length()) {
+            for (i in 0 until headersArray.length()) {
                 val item = headersArray.getJSONObject(i)
-                if(!permissionManager.shouldRedactNetworkHeader(item.keys().next())) {
+                if (!permissionManager.shouldRedactNetworkHeader(item.keys().next())) {
                     trimmed.put(item)
                 }
             }

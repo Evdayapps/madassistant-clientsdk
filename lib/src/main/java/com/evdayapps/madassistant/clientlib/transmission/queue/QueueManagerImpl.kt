@@ -106,6 +106,7 @@ class QueueManagerImpl(
 
     /**
      * Handles the message received from the Handler Callback
+     *
      * Does one of 3 things, depending on connection state:
      * - Sends the message if the state is Connected or Disconnecting (to clear the queue)
      * - Requeue the message if state is None or Connecting

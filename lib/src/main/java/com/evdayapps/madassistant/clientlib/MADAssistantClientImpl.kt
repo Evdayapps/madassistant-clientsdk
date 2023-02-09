@@ -94,7 +94,6 @@ class MADAssistantClientImpl(
     // region Connection Management
     /**
      * - Initiates a connection to the repository service
-     * - Also starts a new session, so that logs are tagged accordingly
      */
     override fun connect() = connectionManager.connect()
 
@@ -103,13 +102,10 @@ class MADAssistantClientImpl(
         message = "Client requested disconnection"
     )
 
-    override fun onConnected() {
-        callback.onConnected()
-    }
+    override fun onConnected() = callback.onConnected()
 
-    override fun onDisconnected(code: Int, message: String) {
+    override fun onDisconnected(code: Int, message: String) =
         callback.onDisconnected(code = code, message = message)
-    }
     // endregion Connection Management
 
     // region Session Management
@@ -119,18 +115,15 @@ class MADAssistantClientImpl(
      */
     override fun startSession() = transmitter.startSession()
 
-    override fun onSessionStarted(sessionId: Long) {
+    override fun onSessionStarted(sessionId: Long) =
         callback.onSessionStarted(sessionId = sessionId)
-    }
 
     /**
      * End an ongoing session
      */
     override fun endSession() = transmitter.endSession()
 
-    override fun onSessionEnded(sessionId: Long) {
-        callback.onSessionEnded(sessionId = sessionId)
-    }
+    override fun onSessionEnded(sessionId: Long) = callback.onSessionEnded(sessionId = sessionId)
     // endregion Session Management
 
     // region Logging
