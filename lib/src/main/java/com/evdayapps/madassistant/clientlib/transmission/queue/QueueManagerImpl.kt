@@ -49,36 +49,23 @@ class QueueManagerImpl(
         third: Any?,
         fourth: Any?
     ) {
-        when (connectionManager.currentState) {
-            ConnectionManager.State.Connecting,
-            ConnectionManager.State.Connected -> {
-                try {
-                    val data = MessageData(
-                        timestamp = timestamp,
-                        threadName = Thread.currentThread().name,
-                        sessionId = sessionId,
-                        first = first,
-                        second = second,
-                        third = third,
-                        fourth = fourth
-                    )
-                    val key = "$type:$timestamp".hashCode()
-                    cacheTable.put(key, data)
+        if (connectionManager.isConnectedOrConnecting()) {
+            try {
+                val data = MessageData(
+                    timestamp = timestamp,
+                    threadName = Thread.currentThread().name,
+                    sessionId = sessionId,
+                    first = first,
+                    second = second,
+                    third = third,
+                    fourth = fourth
+                )
+                val key = "$type:$timestamp".hashCode()
+                cacheTable[key] = data
 
-                    queueMessage(
-                        type = type,
-                        key = key
-                    )
-                } catch (ex: Exception) {
-                    logger?.e(ex)
-                }
-            }
-
-            ConnectionManager.State.None,
-            ConnectionManager.State.Disconnecting,
-            ConnectionManager.State.Disconnected -> {
-                // Don't add any new messages to the queue,
-                // since we've already received a disconnect signal
+                queueMessage(type = type, key = key)
+            } catch (ex: Exception) {
+                logger?.e(ex)
             }
         }
     }
@@ -118,30 +105,18 @@ class QueueManagerImpl(
             "handleMessage: state: ${connectionManager.currentState} message: $message"
         )*/
 
-        when (connectionManager.currentState) {
-            // If the client is connected/disconnecting, send the message
-            ConnectionManager.State.Connected,
-            ConnectionManager.State.Disconnecting -> {
+        when {
+            connectionManager.isConnected() || connectionManager.isDisconnecting() -> {
                 val data = cacheTable[message.arg1]
-                callback?.processQueuedMessage(
-                    type = message.what,
-                    data = data as MessageData
-                )
+                callback?.processQueuedMessage(type = message.what, data = data as MessageData)
 
                 cacheTable.remove(message.arg1)
             }
 
-            // The client is not yet ready to send messages, requeue the message
-            ConnectionManager.State.Connecting -> queueMessage(
+            connectionManager.isConnecting() -> queueMessage(
                 type = message.what,
                 key = message.arg1
             )
-
-            // If the client is disconnected or none, drop the message
-            ConnectionManager.State.None,
-            ConnectionManager.State.Disconnected -> {
-                // Drop the message
-            }
         }
 
         return true
