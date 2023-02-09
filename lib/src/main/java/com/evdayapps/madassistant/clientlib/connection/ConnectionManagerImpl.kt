@@ -34,10 +34,12 @@ class ConnectionManagerImpl(
                 "7E:73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
     }
 
-    override var currentState: ConnectionManager.State = ConnectionManager.State.None
+    private var currentState: ConnectionManager.State = ConnectionManager.State.None
 
     private var callback: ConnectionManager.Callback? = null
     private var repositoryServiceAIDL: MADAssistantRepositoryAIDL? = null
+
+    override fun getState(): ConnectionManager.State = currentState
 
     override fun setCallback(callback: ConnectionManager.Callback) {
         this.callback = callback
@@ -88,9 +90,10 @@ class ConnectionManagerImpl(
     }
 
     private fun setConnectionState(state: ConnectionManager.State) {
-        if(state != currentState) {
-            logger?.i(TAG, "Connection State changed to $state")
+        if (state != currentState) {
             this.currentState = state
+            callback?.onConnectionStateChanged(currentState)
+            logger?.i(TAG, "Connection State changed to $state")
         }
     }
 
@@ -236,7 +239,6 @@ class ConnectionManagerImpl(
         when (errorMessage) {
             null -> {
                 setConnectionState(ConnectionManager.State.Connected)
-                callback?.onConnected()
             }
             else -> {
                 disconnect(code = 401, message = "AuthToken Failed")

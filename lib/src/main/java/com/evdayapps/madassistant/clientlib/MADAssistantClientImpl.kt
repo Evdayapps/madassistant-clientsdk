@@ -36,9 +36,10 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 class MADAssistantClientImpl(
     private val applicationContext: Context,
     private val passphrase: String,
-    private val logger: Logger? = null,
     private val repositorySignature: String = DEFAULT_SIGNATURE,
     private val ignoreDeviceIdCheck: Boolean = false,
+    // Logs
+    private val logger: Logger? = null,
     // Components
     private val cipher: MADAssistantCipher = MADAssistantCipherImpl(
         passPhrase = passphrase
@@ -50,9 +51,9 @@ class MADAssistantClientImpl(
     ),
     private val connectionManager: ConnectionManager = ConnectionManagerImpl(
         applicationContext = applicationContext,
-        logger = logger,
         repositorySignature = repositorySignature,
         permissionManager = permissionManager,
+        logger = logger,
     ),
     private val transmitter: Transmitter = TransmitterImpl(
         cipher = cipher,
@@ -102,10 +103,13 @@ class MADAssistantClientImpl(
         message = "Client requested disconnection"
     )
 
-    override fun onConnected() = callback.onConnected()
+    override fun getConnectionState(): ConnectionManager.State = connectionManager.getState()
 
     override fun onDisconnected(code: Int, message: String) =
         callback.onDisconnected(code = code, message = message)
+
+    override fun onConnectionStateChanged(state: ConnectionManager.State) =
+        callback.onConnectionStateChanged(state)
     // endregion Connection Management
 
     // region Session Management
@@ -124,6 +128,12 @@ class MADAssistantClientImpl(
     override fun endSession() = transmitter.endSession()
 
     override fun onSessionEnded(sessionId: Long) = callback.onSessionEnded(sessionId = sessionId)
+
+    /**
+     * Check if there is an active session
+     */
+    override fun hasActiveSession() = transmitter.hasActiveSession()
+
     // endregion Session Management
 
     // region Logging

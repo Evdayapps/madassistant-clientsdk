@@ -3,7 +3,6 @@ package com.evdayapps.madassistant.clientlib.transmission.queue
 import android.os.Handler
 import android.os.Message
 import android.util.Log
-import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManagerImpl
 import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.MADAssistantTransmissionType
@@ -79,8 +78,6 @@ class QueueManagerTest {
      */
     @Test
     fun queueHandlingForNoneState() {
-        every { connectionManager.currentState } returns ConnectionManager.State.None
-
         queueManager.addMessageToQueue(
             MADAssistantTransmissionType.Analytics,
             first = "Test",
@@ -96,7 +93,6 @@ class QueueManagerTest {
      */
     @Test(timeout = 20000)
     fun queueHandlingWhenConnectingState() {
-        every { connectionManager.currentState } returns ConnectionManager.State.Connecting
         queueManager.addMessageToQueue(
             MADAssistantTransmissionType.Analytics,
             first = "Test",
@@ -114,7 +110,6 @@ class QueueManagerTest {
      */
     @Test
     fun queueHandlingWhenConnectedState() {
-        every { connectionManager.currentState } returns ConnectionManager.State.Connected
 
         queueManager.addMessageToQueue(
             MADAssistantTransmissionType.Analytics,

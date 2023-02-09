@@ -14,13 +14,19 @@ interface ConnectionManager {
 
     interface Callback {
 
-        fun onConnected()
+        /**
+         * Callback to notify the listener that the state has changed
+         */
+        fun onConnectionStateChanged(state : ConnectionManager.State)
 
         fun onDisconnected(code: Int, message: String)
 
     }
 
-    var currentState: State
+    /**
+     * Returns the current state of the connection
+     */
+    fun getState() : ConnectionManager.State
 
     /**
      * Set the callback, which listens for state changes
