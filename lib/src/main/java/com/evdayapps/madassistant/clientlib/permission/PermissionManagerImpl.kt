@@ -2,6 +2,7 @@ package com.evdayapps.madassistant.clientlib.permission
 
 import android.util.Log
 import com.evdayapps.madassistant.clientlib.utils.Logger
+import com.evdayapps.madassistant.clientlib.utils.matches
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import com.evdayapps.madassistant.common.models.permissions.MADAssistantPermissions
@@ -31,91 +32,68 @@ class PermissionManagerImpl(
     private var patternExceptionsMessage: Pattern? = null
 
     /**
-     * Sets the permission string that's received from the repository
-     * This method should:
-     * - Decipher the string
-     * - Convert to a JSONObject, with JSONException test
-     * - Convert to a [com.evdayapps.madassistant.common.handshake.MADAssistantPermissions] model
-     * - Store the permission model for later checks
-     *
-     * @param string The string received from the repository
-     * @return null string if no issues, else a string explaining the issue
-     * @since 0.0.1
+     * This function is used to set the authorization token for the system.
+     * @param string The encrypted authorization token
+     * @param deviceIdentifier is the identifier for the device.
+     * @return an error message if an error is encountered, else null
      */
     override fun setAuthToken(string: String?, deviceIdentifier: String): String? {
-        if (string.isNullOrBlank()) {
-            return "AuthToken was null or blank"
-        } else {
-            try {
+        // Check if the input string is null or blank.
+        return when {
+            string.isNullOrBlank() -> "AuthToken was null or blank"
+            else -> try {
+                // Decrypt the input string and parse it into a JSON object.
                 val deciphered = cipher.decrypt(string)
                 val json = JSONObject(deciphered)
-
                 val permissions = MADAssistantPermissions(json)
-                this.permissions = permissions
-                logger?.i(
-                    TAG,
-                    "permissions: $permissions"
-                )
 
-                if (!ignoreDeviceIdCheck) {
-                    if (!deviceIdentifier.equals(permissions.deviceId, ignoreCase = true)) {
-                        throw Exception("Invalid device identifier")
-                    }
+                // Store the permissions object in a class property.
+                this.permissions = permissions
+                logger?.i(TAG, "permissions: $permissions")
+
+                // If the device identifier check is not ignored and the device identifier does not match the one in the permissions object, throw an exception.
+                if (!ignoreDeviceIdCheck && deviceIdentifier != permissions.deviceId) {
+                    throw Exception("Invalid device identifier")
                 }
 
-                // Network Calls Regex
-                val flags = Pattern.MULTILINE and Pattern.CASE_INSENSITIVE
-                patternNetworkCallMethod =
-                    permissions.networkCalls.filterMethod
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
-                patternNetworkCallUrl =
-                    permissions.networkCalls.filterUrl
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
+                // Set the permission patterns based on the permissions object.
+                setPermissionPatterns(permissions)
 
-                patternAnalyticsDestination =
-                    permissions.analytics.filterDestination
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
-                patternAnalyticsName =
-                    permissions.analytics.filterEventName
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
-
-                patternAnalyticsParams =
-                    permissions.analytics.filterParamData
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
-                patternGenericLogsTag =
-                    permissions.genericLogs.filterTag
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
-                patternGenericLogsMessage =
-                    permissions.genericLogs.filterMessage
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
-
-                patternExceptionsType =
-                    permissions.exceptions.filterType
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
-                patternExceptionsMessage =
-                    permissions.exceptions.filterMessage
-                        ?.takeIf { it.isNotBlank() }
-                        ?.toPattern(flags)
-
+                // Return null if there are no errors.
+                null
             } catch (ex: JSONException) {
-                return "Authtoken decryption failed ${ex.message}"
+                // Return an error message if the JSON parsing fails.
+                "Authtoken decryption failed ${ex.message}"
             } catch (ex: InvalidObjectException) {
-                return "Invalid authToken"
+                // Return an error message if the auth token is invalid.
+                "Invalid authToken"
             } catch (ex: Exception) {
-                return "Unknown exception processing authToken: ${ex.message}"
+                // Return an error message for any other exceptions.
+                "Unknown exception processing authToken: ${ex.message}"
             }
         }
-
-        return null
     }
+
+
+    private fun setPermissionPatterns(permissions: MADAssistantPermissions) {
+        val flags = Pattern.MULTILINE and Pattern.CASE_INSENSITIVE
+        listOf(
+            permissions.networkCalls.filterMethod to ::patternNetworkCallMethod,
+            permissions.networkCalls.filterUrl to ::patternNetworkCallUrl,
+            permissions.analytics.filterDestination to ::patternAnalyticsDestination,
+            permissions.analytics.filterEventName to ::patternAnalyticsName,
+            permissions.analytics.filterParamData to ::patternAnalyticsParams,
+            permissions.genericLogs.filterTag to ::patternGenericLogsTag,
+            permissions.genericLogs.filterMessage to ::patternGenericLogsMessage,
+            permissions.exceptions.filterType to ::patternExceptionsType,
+            permissions.exceptions.filterMessage to ::patternExceptionsMessage
+        ).forEach { (value, property) ->
+            if (!value.isNullOrBlank()) {
+                property.set(value.toPattern(flags))
+            }
+        }
+    }
+
 
     /**
      * The base logging check
@@ -124,16 +102,13 @@ class PermissionManagerImpl(
      * - Is the current time within the timestamps?
      * @since 0.0.1
      *
-     * @return True if logging is enabled, else false
+     * @return True if logging is enabled and timestamps check out, else false
      */
-    override fun isLoggingEnabled(): Boolean {
-        return when {
-            permissions == null -> false
-            System.currentTimeMillis() < (permissions?.timestampStart ?: 0) -> false
-            System.currentTimeMillis() > (permissions?.timestampEnd ?: Long.MAX_VALUE) -> false
-            else -> true
-        }
-    }
+    override fun isLoggingEnabled(): Boolean = permissions?.let { perms ->
+        val start = perms.timestampStart ?: 0
+        val end = perms.timestampEnd ?: Long.MAX_VALUE
+        System.currentTimeMillis() in start until end
+    } ?: false
 
     /**
      * Should api call logs be encrypted?
@@ -149,27 +124,14 @@ class PermissionManagerImpl(
      * @return true or false
      */
     override fun shouldLogNetworkCall(networkCallLogModel: NetworkCallLogModel): Boolean {
-        if (!isLoggingEnabled()) {
+        if (!isLoggingEnabled() || (permissions?.networkCalls?.enabled != true)) {
             return false
         }
 
-        if (permissions?.networkCalls?.enabled != true) {
-            return false
-        }
+        val chkMethod = patternNetworkCallMethod?.matches(networkCallLogModel.method) ?: true
+        val chkUrl = patternNetworkCallUrl?.matches(networkCallLogModel.url) ?: true
 
-        if (patternNetworkCallMethod != null) {
-            if (patternNetworkCallMethod?.matcher(networkCallLogModel.method)?.matches() != true) {
-                return false
-            }
-        }
-
-        if (patternNetworkCallUrl != null) {
-            if (patternNetworkCallUrl?.matcher(networkCallLogModel.url)?.matches() != true) {
-                return false
-            }
-        }
-
-        return true
+        return chkMethod && chkUrl
     }
 
     /**
@@ -183,27 +145,14 @@ class PermissionManagerImpl(
      * Test if [exception] should be logged to the repository
      */
     override fun shouldLogExceptions(throwable: Throwable): Boolean {
-        if (!isLoggingEnabled()) {
+        if (!isLoggingEnabled() || (permissions?.exceptions?.enabled != true)) {
             return false
         }
 
-        if (permissions?.exceptions?.enabled != true) {
-            return false
-        }
+        val chkType = patternExceptionsType?.matches(throwable.javaClass.simpleName) ?: true
+        val chkMessage = patternExceptionsMessage?.matches(throwable.message) ?: true
 
-        if (patternExceptionsType != null) {
-            if (patternExceptionsType?.matcher(throwable.javaClass.simpleName)?.matches() != true) {
-                return false
-            }
-        }
-
-        if (patternExceptionsMessage != null) {
-            if (patternExceptionsMessage?.matcher(throwable.message)?.matches() != true) {
-                return false
-            }
-        }
-
-        return true
+        return chkType && chkMessage
     }
 
     // region Analytics
@@ -212,48 +161,34 @@ class PermissionManagerImpl(
         eventName: String,
         data: Map<String, Any?>
     ): Boolean {
-        if (!isLoggingEnabled()) {
+        if (!isLoggingEnabled() || permissions?.analytics?.enabled != true) {
             return false
         }
 
-        if (permissions?.analytics?.enabled != true) {
-            return false
-        }
+        val chkDest = patternAnalyticsDestination?.matches(destination) ?: true
+        val checkName = patternAnalyticsName?.matches(eventName) ?: true
+        val checkParams = patternAnalyticsParams?.matches(data.toString()) ?: true
 
-        if (patternAnalyticsDestination != null) {
-            if (patternAnalyticsDestination?.matcher(destination)?.matches() != true
-            ) {
-                return false
-            }
-        }
-
-        patternAnalyticsName?.let {
-            if (patternAnalyticsName?.matcher(destination)?.matches() != true) {
-                return false
-            }
-        }
-
-        if (patternAnalyticsParams != null) {
-            if (patternAnalyticsParams?.matcher(eventName)?.matches() != true) {
-                return false
-            }
-        }
-
-        return true
+        return chkDest && checkName && checkParams
     }
     // endregion Analytics
 
-    // region Generic Logs
+
+    /**
+     * Determine if logging should occur for generic logs
+     *
+     * @param type int representing the log type (e.g. Log.VERBOSE)
+     * @param tag String representing the log tag
+     * @param message String representing the log message
+     *
+     * @return Boolean indicating if the log should occur
+     */
     override fun shouldLogGenericLog(type: Int, tag: String, message: String): Boolean {
-        if (!isLoggingEnabled()) {
+        if (!isLoggingEnabled() || permissions?.genericLogs?.enabled != true) {
             return false
         }
 
-        if (permissions?.genericLogs?.enabled != true) {
-            return false
-        }
-
-        val subtype = when (type) {
+        val subtypeEnabled = when (type) {
             Log.VERBOSE -> permissions?.genericLogs?.logVerbose == true
             Log.DEBUG -> permissions?.genericLogs?.logDebug == true
             Log.WARN -> permissions?.genericLogs?.logWarning == true
@@ -261,23 +196,14 @@ class PermissionManagerImpl(
             Log.INFO -> permissions?.genericLogs?.logInfo == true
             else -> false
         }
-        if (!subtype) {
+        if (!subtypeEnabled) {
             return false
         }
 
-        if (patternGenericLogsTag != null) {
-            if (patternGenericLogsTag?.matcher(tag)?.matches() != true) {
-                return false
-            }
-        }
+        val checkTag = patternGenericLogsTag?.matches(tag) ?: true
+        val checkMessage = patternGenericLogsMessage?.matches(message) ?: true
 
-        if (patternGenericLogsMessage != null) {
-            if (patternGenericLogsMessage?.matcher(message)?.matches() != true) {
-                return false
-            }
-        }
-
-        return true
+        return checkTag && checkMessage
     }
     // endregion Generic Logs
 }
