@@ -2,10 +2,11 @@ package com.evdayapps.madassistant.testapp
 
 import MainScreen
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.MADAssistantClientImpl
@@ -17,7 +18,12 @@ class TestActivity : AppCompatActivity() {
 
     private val TAG = "TestActivity"
 
-    lateinit var madAssistantClient: MADAssistantClient
+    private lateinit var madAssistantClient: MADAssistantClient
+
+    val logs: MutableState<List<Triple<String, String, String>>> = mutableStateOf(listOf())
+    val connectionState: MutableState<ConnectionManager.State> =
+        mutableStateOf(ConnectionManager.State.None)
+    val sessionActive = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +38,13 @@ class TestActivity : AppCompatActivity() {
                     primary = Color(0xff212121)
                 )
             ) {
-                MainScreen(MainScreenViewModel(madAssistantClient))
+                MainScreen(
+                    MainScreenViewModel(madAssistantClient),
+                    madAssistantClient,
+                    logs,
+                    connectionState,
+                    sessionActive
+                )
             }
         }
     }
@@ -40,18 +52,25 @@ class TestActivity : AppCompatActivity() {
     private fun initMADAssistant() {
         val logUtils = object : Logger {
             override fun i(tag: String, message: String) {
-                Log.i(tag, message)
+                logs.value = logs.value.plus(Triple("INFO", tag, message))
             }
 
             override fun v(tag: String, message: String) {
-                Log.v(tag, message)
+                logs.value = logs.value.plus(Triple("VERBOSE", tag, message))
             }
 
             override fun d(tag: String, message: String) {
-                Log.d(tag, message)
+                logs.value = logs.value.plus(Triple("DEBUG", tag, message))
             }
 
             override fun e(throwable: Throwable) {
+                logs.value = logs.value.plus(
+                    Triple(
+                        "ERROR",
+                        throwable::class.java.simpleName,
+                        throwable.message ?: ""
+                    )
+                )
                 throwable.printStackTrace()
             }
         }
@@ -63,25 +82,24 @@ class TestActivity : AppCompatActivity() {
             logger = logUtils,
             callback = object : MADAssistantClient.Callback {
                 override fun onSessionStarted(sessionId: Long) {
-                    Log.i("MADAssistant", "Session Started")
+                    sessionActive.value = true
                 }
 
-                override fun onSessionEnded(sessionId: Long) {}
+                override fun onSessionEnded(sessionId: Long) {
+                    sessionActive.value = false
+                }
 
                 override fun onConnectionStateChanged(state: ConnectionManager.State) {
-
+                    connectionState.value = state
                 }
 
-                override fun onDisconnected(code: Int, message: String) {}
+                override fun onDisconnected(code: Int, message: String) {
+                    logs.value =
+                        logs.value.plus(Triple("INFO", "Disconnected", "Code: $code\n$message"))
+                }
 
             }
         )
-
-        // Bind the client to the remote service
-        madAssistantClient.connect()
-
-        // Start a session
-        madAssistantClient.startSession()
 
         madAssistantClient.logCrashes()
     }
