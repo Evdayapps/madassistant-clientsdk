@@ -11,7 +11,7 @@ import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.MADAssistantClientImpl
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.utils.Logger
-import com.evdayapps.madassistant.testapp.screens.MainScreenViewModel
+import com.evdayapps.madassistant.testapp.screens.main.MainScreenViewModel
 
 class TestActivity : AppCompatActivity() {
 
