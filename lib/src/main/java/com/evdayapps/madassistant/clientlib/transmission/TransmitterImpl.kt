@@ -14,6 +14,7 @@ import com.evdayapps.madassistant.common.models.genericlog.GenericLogModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
 import org.json.JSONArray
+import org.json.JSONObject
 import java.util.*
 
 /**
@@ -296,7 +297,7 @@ class TransmitterImpl(
      *
      * TODO: Process the message queue
      */
-    override fun logCrashReport(throwable: Throwable) {
+    override fun logCrashReport(throwable: Throwable, message: String?, data: Map<String, Any>?) {
         if (sessionId != -1L) {
             _processException(
                 MessageData(
@@ -304,7 +305,9 @@ class TransmitterImpl(
                     threadName = Thread.currentThread().name,
                     sessionId = sessionId,
                     first = throwable,
-                    second = true
+                    second = true,
+                    third = message,
+                    fourth = data
                 )
             )
         }
@@ -313,7 +316,11 @@ class TransmitterImpl(
     /**
      * Adds an exception to the queue
      */
-    override fun logException(throwable: Throwable) {
+    override fun logException(
+        throwable: Throwable,
+        message: String?,
+        data: Map<String, Any>?
+    ) {
         if (sessionId != -1L) {
             queueManager.addMessageToQueue(
                 type = MADAssistantTransmissionType.Exception,
@@ -335,7 +342,9 @@ class TransmitterImpl(
                 val json = ExceptionModel(
                     threadName = messageData.threadName,
                     throwable = throwable,
-                    isCrash = isCrash
+                    isCrash = isCrash,
+                    message = messageData.third?.run { this as String },
+                    data = messageData.fourth?.run { JSONObject(this as Map<String, Any?>) }
                 ).toJsonObject().toString(0)
 
                 transmit(
