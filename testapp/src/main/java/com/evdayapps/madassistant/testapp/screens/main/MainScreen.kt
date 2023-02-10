@@ -1,21 +1,19 @@
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import android.util.Log
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.evdayapps.madassistant.testapp.screens.main.MainScreenViewModel
 import com.evdayapps.madassistant.testapp.screens.main.widgets.AbsSectionCardWidget
 import com.evdayapps.madassistant.testapp.screens.main.widgets.CustomTextField
+import com.google.accompanist.flowlayout.FlowRow
 
 @Composable()
 fun MainScreen(viewModel: MainScreenViewModel) {
@@ -147,20 +145,99 @@ fun MainScreen(viewModel: MainScreenViewModel) {
                     CustomTextField(
                         value = config.message,
                         maxLines = 1,
-                        label = "Destination",
+                        label = "Message",
                         onStrValueChange = {
                             updateConfig(viewModel.logsConfig.value.copy(message = it))
                         }
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(
+                        mainAxisSpacing = 16.dp,
+                        crossAxisSpacing = 8.dp
+                    ) {
+                        listOf(Log.ERROR, Log.WARN, Log.DEBUG, Log.INFO, Log.VERBOSE).map {
+                            Row(modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .clickable {
+                                    updateConfig(config.copy(type = it))
+                                }
+                            ) {
+                                RadioButton(selected = config.type == it, onClick = null)
+                                Text(
+                                    text = when (it) {
+                                        Log.ERROR -> "Error"
+                                        Log.WARN -> "Warn"
+                                        Log.DEBUG -> "Debug"
+                                        Log.INFO -> "Info"
+                                        else -> "Verbose"
+                                    },
+                                    modifier = Modifier.padding(start = 16.dp)
+                                )
+
+                            }
+                        }
+                    }
                 },
                 paramsTitle = "Parameters",
                 paramsAddBtnLabel = "Add Parameter",
                 paramsList = { it.parameters },
                 updateParams = { config, params -> config.copy(parameters = params) },
                 onUpdateConfig = { config -> viewModel.logsConfig.value = config },
-                onRequestButtonClicked = { viewModel.testAnalytics() }
+                onRequestButtonClicked = { viewModel.testGenericLog() }
             )
             Spacer(Modifier.height(16.dp))
+            AbsSectionCardWidget(
+                title = "Exception",
+                config = viewModel.exceptionConfig.value,
+                headerBuilder = { config ->
+                    Text(
+                        text = config.message,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.caption.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                    if (config.data.isNotEmpty()) {
+                        Text(
+                            text = config.data.joinToString(", ") {
+                                "${it.key}:${it.value}"
+                            },
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.caption,
+                            maxLines = 1,
+                        )
+                    }
+                },
+                formFields = { config, updateConfig ->
+                    CustomTextField(
+                        value = config.message,
+                        maxLines = 1,
+                        label = "Message",
+                        onStrValueChange = {
+                            updateConfig(viewModel.exceptionConfig.value.copy(message = it))
+                        }
+                    )
+                },
+                paramsTitle = "Data",
+                paramsAddBtnLabel = "Add Data item",
+                paramsList = { it.data },
+                updateParams = { config, params -> config.copy(data = params) },
+                onUpdateConfig = { config -> viewModel.exceptionConfig.value = config },
+                onRequestButtonClicked = { viewModel.testNonFatalException() }
+            )
+            Spacer(Modifier.height(32.dp))
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .requiredHeight(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = Color(0xFFE91E63),
+                    contentColor = Color.White
+                ),
+                onClick = { viewModel.testCrashReport() }
+            ) {
+                Text("Crash the App!")
+            }
         }
     }
 }

@@ -33,7 +33,7 @@ interface MADAssistantClient {
      */
     fun disconnect()
 
-    fun getConnectionState() : ConnectionManager.State
+    fun getConnectionState(): ConnectionManager.State
     // endregion Connection
 
     // region Sessions
@@ -51,7 +51,7 @@ interface MADAssistantClient {
     /**
      * Check if there is an active session
      */
-    fun hasActiveSession() : Boolean
+    fun hasActiveSession(): Boolean
     // endregion Sessions
 
     /**
@@ -77,7 +77,11 @@ interface MADAssistantClient {
      *
      * @param throwable The cause of the crash
      */
-    fun logCrashReport(throwable: Throwable)
+    fun logCrashReport(
+        throwable: Throwable,
+        message: String? = null,
+        data: Map<String, Any?>? = null
+    )
 
     /**
      * Log an analytics event in the system
@@ -114,7 +118,12 @@ interface MADAssistantClient {
      * Log an exception to the system
      *
      * @param throwable The cause of the exception
+     * @param message An optional message to better describe the exception
+     * @param data Any relevant data to help debug the exception
      */
-    fun logException(throwable: Throwable)
-
+    fun logException(
+        throwable: Throwable,
+        message: String? = null,
+        data: Map<String, Any>? = null
+    )
 }

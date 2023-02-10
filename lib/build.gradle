@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'maven-publish'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -32,7 +32,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation "io.mockk:mockk-android:1.12.0"
 
-    api 'com.github.Evdayapps:madassistant-common:0.0.13'
+    api 'com.github.Evdayapps:madassistant-common:0.0.14'
     //api project(path: ':madassistant-common')
 }
 

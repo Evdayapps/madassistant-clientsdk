@@ -42,7 +42,7 @@ interface Transmitter {
     /**
      * Return true if there is an active session
      */
-    fun hasActiveSession() : Boolean
+    fun hasActiveSession(): Boolean
 
     /**
      * Disconnect from the repository. This method should be called instead of [ConnectionManager.disconnect] because it ensures processing of the log queue
@@ -57,12 +57,20 @@ interface Transmitter {
     /**
      * Log a fatal exception in the repository
      */
-    fun logCrashReport(throwable: Throwable)
+    fun logCrashReport(
+        throwable: Throwable,
+        message: String? = null,
+        data: Map<String, Any>? = null
+    )
 
     /**
      * Log an exception (non-fatal) in the repository
      */
-    fun logException(throwable: Throwable)
+    fun logException(
+        throwable: Throwable,
+        message: String? = null,
+        data: Map<String, Any>? = null
+    )
 
     /**
      * Log a generic log in the repository

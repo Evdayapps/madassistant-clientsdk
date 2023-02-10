@@ -97,6 +97,7 @@ fun <ConfigType> AbsSectionCardWidget(
             Row {
                 Column(modifier = Modifier.weight(1f, true)) {
                     Text(title, style = MaterialTheme.typography.h6)
+                    Spacer(Modifier.height(4.dp))
                     headerBuilder(config)
                 }
                 Icon(
@@ -120,8 +121,7 @@ fun <ConfigType> AbsSectionCardWidget(
                         },
                         onUpdate = { onUpdateConfig(updateParams(config, it)) }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
             Button(

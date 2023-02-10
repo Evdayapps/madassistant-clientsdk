@@ -141,7 +141,11 @@ class MADAssistantClientImpl(
         data = data
     )
 
-    override fun logCrashReport(throwable: Throwable) = transmitter.logCrashReport(
+    override fun logCrashReport(
+        throwable: Throwable,
+        message: String?,
+        data: Map<String, Any?>?
+    ) = transmitter.logCrashReport(
         throwable = throwable
     )
 
@@ -167,8 +171,14 @@ class MADAssistantClientImpl(
         data = data
     )
 
-    override fun logException(throwable: Throwable) = transmitter.logException(
-        throwable = throwable
+    override fun logException(
+        throwable: Throwable,
+        message: String?,
+        data: Map<String, Any>?
+    ) = transmitter.logException(
+        throwable = throwable,
+        message = message,
+        data = data
     )
     // endregion Logging
 

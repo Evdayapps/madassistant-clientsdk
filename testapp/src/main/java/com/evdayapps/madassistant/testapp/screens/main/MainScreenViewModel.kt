@@ -23,16 +23,21 @@ class MainScreenViewModel(
     )
 
     data class AnalyticsConfig(
-        val destination : String,
-        val eventName : String,
-        val parameters : List<Parameter<Any>>
+        val destination: String,
+        val eventName: String,
+        val parameters: List<Parameter<Any>>
     )
 
     data class LogConfig(
-        val type : Int,
-        val tag : String,
-        val message : String,
-        val parameters : List<Parameter<Any>>
+        val type: Int,
+        val tag: String,
+        val message: String,
+        val parameters: List<Parameter<Any>>
+    )
+
+    data class ExceptionConfig(
+        val message: String,
+        val data: List<Parameter<Any>>
     )
 
     val networkCallConfig: MutableState<NetworkCallConfig> = mutableStateOf(
@@ -50,10 +55,12 @@ class MainScreenViewModel(
     )
 
     val analyticsConfig = mutableStateOf(
-        AnalyticsConfig(destination = "MyAnalytics", "Open Screen", listOf(
-            Parameter(key = "screenName", value = "main"),
-            Parameter(key = "source", value = "organic")
-        ))
+        AnalyticsConfig(
+            destination = "MyAnalytics", "Open Screen", listOf(
+                Parameter(key = "screenName", value = "main"),
+                Parameter(key = "source", value = "organic")
+            )
+        )
     )
 
     val logsConfig = mutableStateOf(
@@ -62,6 +69,16 @@ class MainScreenViewModel(
             tag = "MainScreen",
             message = "Just checking in",
             parameters = listOf(
+                Parameter(key = "area", value = "World"),
+                Parameter(key = "param2", value = "value2")
+            )
+        )
+    )
+
+    val exceptionConfig = mutableStateOf(
+        ExceptionConfig(
+            message = "Test error occured",
+            data = listOf(
                 Parameter(key = "area", value = "World"),
                 Parameter(key = "param2", value = "value2")
             )
@@ -108,7 +125,7 @@ class MainScreenViewModel(
             type = logsConfig.value.type,
             tag = logsConfig.value.tag,
             message = logsConfig.value.message,
-            data = analyticsConfig.value.parameters.associate { it.key to it.value }
+            data = logsConfig.value.parameters.associate { it.key to it.value }
         )
     }
 
@@ -116,7 +133,11 @@ class MainScreenViewModel(
         try {
             println(""[4])
         } catch (ex: Exception) {
-            madAssistantClient.logException(ex)
+            madAssistantClient.logException(
+                throwable = ex,
+                message = exceptionConfig.value.message,
+                data = exceptionConfig.value.data.associate { it.key to it.value }
+            )
         }
     }
 
