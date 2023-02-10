@@ -93,6 +93,11 @@ class TransmitterImpl(
             }
 
             _callback?.onSessionStarted(sessionId)
+        } else {
+            logger?.d(
+                TAG,
+                "Unable to start a session. Connection State is ${connectionManager.getState().name}"
+            )
         }
     }
 

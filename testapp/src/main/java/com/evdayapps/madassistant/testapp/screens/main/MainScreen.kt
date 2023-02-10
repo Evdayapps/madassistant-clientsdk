@@ -1,26 +1,51 @@
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.List
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.evdayapps.madassistant.clientlib.MADAssistantClient
+import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.testapp.screens.main.MainScreenViewModel
 import com.evdayapps.madassistant.testapp.screens.main.widgets.AbsSectionCardWidget
 import com.evdayapps.madassistant.testapp.screens.main.widgets.CustomTextField
 import com.google.accompanist.flowlayout.FlowRow
 
-@Composable()
-fun MainScreen(viewModel: MainScreenViewModel) {
+@Composable
+fun MainScreen(
+    viewModel: MainScreenViewModel,
+    madAssistantClient: MADAssistantClient,
+    logs: MutableState<List<Triple<String, String, String>>>,
+    connectionState: MutableState<ConnectionManager.State>,
+    sessionActive: MutableState<Boolean>,
+) {
+    val logsVisible = remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("MADAssistant Demo Client") }
+                title = { Text("MADAssistant Demo Client") },
+                actions = {
+                    IconButton(onClick = { logsVisible.value = !logsVisible.value }) {
+                        Icon(imageVector = Icons.Default.List, contentDescription = "Logs")
+                    }
+                }
             )
         }
     ) { padding ->
@@ -30,6 +55,58 @@ fun MainScreen(viewModel: MainScreenViewModel) {
                 .padding(horizontal = 16.dp, vertical = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            Text("ConnectionState")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(connectionState.value.name, modifier = Modifier.weight(1f))
+                Button(
+                    onClick = {
+                        when (connectionState.value) {
+                            ConnectionManager.State.None,
+                            ConnectionManager.State.Disconnected -> madAssistantClient.connect()
+                            ConnectionManager.State.Connected -> madAssistantClient.disconnect()
+                            else -> {}
+                        }
+                    },
+                    enabled = when (connectionState.value) {
+                        ConnectionManager.State.None,
+                        ConnectionManager.State.Connected,
+                        ConnectionManager.State.Disconnected -> true
+                        else -> false
+                    }
+                ) {
+                    Text(
+                        text = when (connectionState.value) {
+                            ConnectionManager.State.None,
+                            ConnectionManager.State.Disconnected -> "Connect"
+                            ConnectionManager.State.Connected -> "Disconnect"
+                            else -> ""
+                        }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text("Session")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(connectionState.value.name, modifier = Modifier.weight(1f))
+                Button(
+                    onClick = {
+                        when {
+                            sessionActive.value -> madAssistantClient.endSession()
+                            else -> madAssistantClient.startSession()
+                        }
+                    },
+                ) {
+                    Text(
+                        text = when {
+                            sessionActive.value -> "End Session"
+                            else -> "Start Session"
+                        }
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+
             AbsSectionCardWidget(
                 title = "Network Call",
                 config = viewModel.networkCallConfig.value,
@@ -237,6 +314,17 @@ fun MainScreen(viewModel: MainScreenViewModel) {
                 onClick = { viewModel.testCrashReport() }
             ) {
                 Text("Crash the App!")
+            }
+        }
+        AnimatedVisibility(visible = logsVisible.value, modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.background(MaterialTheme.colors.background),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+            ) {
+                items(logs.value) {
+                    Text("${it.first}\n${it.second}\n${it.third}")
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
         }
     }
