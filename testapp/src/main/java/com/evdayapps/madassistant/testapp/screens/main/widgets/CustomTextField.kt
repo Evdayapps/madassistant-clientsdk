@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -43,6 +44,7 @@ fun CustomTextField(
         }
         BasicTextField(
             value = tvValue.value,
+            textStyle = MaterialTheme.typography.body2.copy(color = MaterialTheme.colors.onBackground),
             onValueChange = { res: TextFieldValue ->
                 tvValue.value = res
                 onValueChange?.invoke(res) ?: onStrValueChange?.invoke(res.text)
@@ -51,7 +53,7 @@ fun CustomTextField(
             modifier = modifier
                 .fillMaxWidth()
                 .background(color = Color.Transparent, shape = CircleShape)
-                .border(BorderStroke(0.5.dp, color = Color.Black), shape = CircleShape)
+                .border(BorderStroke(0.5.dp, color = MaterialTheme.colors.onBackground), shape = CircleShape)
                 .padding(horizontal = 12.dp, vertical = 10.dp),
         )
     }

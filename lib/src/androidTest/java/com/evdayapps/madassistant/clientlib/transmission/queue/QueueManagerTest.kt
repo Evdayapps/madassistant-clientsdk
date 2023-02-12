@@ -53,6 +53,10 @@ class QueueManagerTest {
                 Log.d(tag, message)
             }
 
+            override fun w(tag: String, message: String) {
+                Log.w(tag, message)
+            }
+
             override fun e(throwable: Throwable) {
                 throwable.printStackTrace()
             }

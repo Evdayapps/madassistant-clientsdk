@@ -332,6 +332,8 @@ class TransmitterImpl(
                 sessionId = sessionId,
                 first = throwable,
                 second = false,
+                third = message,
+                fourth = data
             )
         }
     }
@@ -343,11 +345,10 @@ class TransmitterImpl(
         try {
             val throwable: Throwable = messageData.first as Throwable
             if (permissionManager.shouldLogExceptions(throwable)) {
-                val isCrash = messageData.second as Boolean
                 val json = ExceptionModel(
                     threadName = messageData.threadName,
                     throwable = throwable,
-                    isCrash = isCrash,
+                    isCrash = messageData.second as Boolean,
                     message = messageData.third?.run { this as String },
                     data = messageData.fourth?.run { JSONObject(this as Map<String, Any?>) }
                 ).toJsonObject().toString(0)
