@@ -55,9 +55,12 @@ fun MainScreen(
                 .padding(horizontal = 16.dp, vertical = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Text("ConnectionState")
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(connectionState.value.name, modifier = Modifier.weight(1f))
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                    Text("Connection State", style = MaterialTheme.typography.h6)
+                    Text(connectionState.value.name)
+                }
+
                 Button(
                     onClick = {
                         when (connectionState.value) {
@@ -86,9 +89,11 @@ fun MainScreen(
             }
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("Session")
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(connectionState.value.name, modifier = Modifier.weight(1f))
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                    Text("Session State", style = MaterialTheme.typography.h6)
+                    Text(if (sessionActive.value) "Active" else "Inactive")
+                }
                 Button(
                     onClick = {
                         when {
@@ -330,4 +335,3 @@ fun MainScreen(
     }
 }
 
-// region Api Call

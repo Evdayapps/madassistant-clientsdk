@@ -5,9 +5,9 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.darkColors
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.Color
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.MADAssistantClientImpl
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
@@ -34,9 +34,7 @@ class TestActivity : AppCompatActivity() {
         // Set the view
         setContent {
             MaterialTheme(
-                colors = MaterialTheme.colors.copy(
-                    primary = Color(0xff212121)
-                )
+                colors = darkColors()
             ) {
                 MainScreen(
                     MainScreenViewModel(madAssistantClient),
@@ -61,6 +59,10 @@ class TestActivity : AppCompatActivity() {
 
             override fun d(tag: String, message: String) {
                 logs.value = logs.value.plus(Triple("DEBUG", tag, message))
+            }
+
+            override fun w(tag: String, message: String) {
+                logs.value = logs.value.plus(Triple("WARN", tag, message))
             }
 
             override fun e(throwable: Throwable) {
