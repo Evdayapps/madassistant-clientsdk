@@ -24,21 +24,21 @@ This is the SDK for integration in client applications.
 - Provides the option to mail a single log or an entire session via share
 - Available at https://play.google.com/store/apps/details?id=com.evdayapps.madassistant.repository
 #### Screenshots
-<img width="30%" alt="portfolio_view" src="doc/client_list.png">
-<img width="30%" alt="portfolio_view" src="doc/device_info.png">
-<img width="30%" alt="portfolio_view" src="doc/dev_portal.png">
-<img width="30%" alt="portfolio_view" src="doc/session_list.png">
-<img width="30%" alt="portfolio_view" src="doc/changelog_list.png">
-<img width="30%" alt="portfolio_view" src="doc/log_list_unfiltered_1.png">
-<img width="30%" alt="portfolio_view" src="doc/loglist_unfiltered_2.png">
-<img width="30%" alt="portfolio_view" src="doc/session_details_filtered.png">
-<img width="30%" alt="portfolio_view" src="doc/network_details.png">
-<img width="30%" alt="portfolio_view" src="doc/stacktrace_0.png">
-<img width="30%" alt="portfolio_view" src="doc/stacktrace_1.png">
-<img width="30%" alt="portfolio_view" src="doc/stacktrace_2.png">
-<img width="30%" alt="portfolio_view" src="doc/analytics_details.png">
-<img width="30%" alt="portfolio_view" src="doc/Screenshot_20220408-213416.png">
-<img width="30%" alt="portfolio_view" src="doc/auth_gen_2.png">
+<img width="120" alt="portfolio_view" src="doc/client_list.png">
+<img width="120" alt="portfolio_view" src="doc/device_info.png">
+<img width="120" alt="portfolio_view" src="doc/dev_portal.png">
+<img width="120" alt="portfolio_view" src="doc/session_list.png">
+<img width="120" alt="portfolio_view" src="doc/changelog_list.png">
+<img width="120" alt="portfolio_view" src="doc/log_list_unfiltered_1.png">
+<img width="120" alt="portfolio_view" src="doc/loglist_unfiltered_2.png">
+<img width="120" alt="portfolio_view" src="doc/session_details_filtered.png">
+<img width="120" alt="portfolio_view" src="doc/network_details.png">
+<img width="120" alt="portfolio_view" src="doc/stacktrace_0.png">
+<img width="120" alt="portfolio_view" src="doc/stacktrace_1.png">
+<img width="120" alt="portfolio_view" src="doc/stacktrace_2.png">
+<img width="120" alt="portfolio_view" src="doc/analytics_details.png">
+<img width="120" alt="portfolio_view" src="doc/Screenshot_20220408-213416.png">
+<img width="120" alt="portfolio_view" src="doc/auth_gen_2.png">
 
 
 ## Features
@@ -66,8 +66,8 @@ An auth-token based system that controls what logs the user may view based on:
 - The logs accessible to the user (with fine-grained regex-based filters). This information is encrypted using a passphrase which needs to provided to this library on runtime, to decrypt. 
 - All filtering is performed within the client library and then sent to the MADAssistant app
 
-<img width="30%" alt="authtoken-generator-1" src="doc/Screenshot_20220408-213416.png">
-<img width="30%" alt="portfolio_view" src="doc/auth_gen_2.png">
+<img width="120" alt="authtoken-generator-1" src="doc/Screenshot_20220408-213416.png">
+<img width="120" alt="portfolio_view" src="doc/auth_gen_2.png">
 
 NOTE: These logs are not uploaded to any server and will remain only on the user's device.
 
