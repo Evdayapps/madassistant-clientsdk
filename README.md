@@ -4,7 +4,7 @@ This is the SDK for integration in client applications.
 
 ## Table of Contents
 1. [What is MADAssistant](#what-is-madassistant)
-2. [Benefits](#benefits)
+2. [Overview](#overview)
 3. [Repository App](#repository-app)
 5. [Security](#security)
 6. [Usage](#usage)
@@ -19,7 +19,7 @@ This is the SDK for integration in client applications.
   - Exportable by email or other share methods
 - **Can be integrated into release builds with complete information security, owing to the auth-token generator.**
 
-## Benefits
+## Overview
 - **Comprehensive logging solution**  
   Allows developers to log network calls, analytics sdk calls, exceptions, crashes and even generic log messages.  
   These logs are timestamped and displayed in a chronological manner, enabling easy audit.  
