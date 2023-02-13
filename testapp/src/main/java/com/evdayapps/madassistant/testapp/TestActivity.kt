@@ -103,7 +103,7 @@ class TestActivity : AppCompatActivity() {
                 override fun onDisconnected(code: Int, message: String) {
                     disconnectReason.value = "[$code] $message"
                     logs.value = logs.value.plus(
-                        Triple("INFO", "Disconnected", "Code: $code\n$message")
+                        Triple("WARN", "Disconnected", "Code: $code\n$message")
                     )
                 }
 
