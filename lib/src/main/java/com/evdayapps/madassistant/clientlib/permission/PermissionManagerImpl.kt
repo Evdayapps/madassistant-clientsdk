@@ -51,8 +51,8 @@ class PermissionManagerImpl(
                 this.permissions = permissions
                 logger?.i(TAG, "permissions: $permissions")
 
-                // If the device identifier check is not ignored and the device identifier does not match the one in the permissions object, throw an exception.
-                if (!ignoreDeviceIdCheck && deviceIdentifier != permissions.deviceId) {
+                // Check device identifier
+                if (!isWhitelistedDevice(deviceIdentifier)) {
                     throw Exception("Invalid device identifier")
                 }
 
@@ -72,6 +72,20 @@ class PermissionManagerImpl(
                 "Unknown exception processing authToken: ${ex.message}"
             }
         }
+    }
+
+    /**
+     * Checks if the id of the current device is in the whitelist
+     * @return true if [ignoreDeviceIdCheck] or device id is in the whitelist
+     */
+    private fun isWhitelistedDevice(deviceId: String): Boolean {
+        if (ignoreDeviceIdCheck) {
+            return true
+        }
+
+        // Check if the device id is in the whitelist
+        // Returns false if no permissions/deviceIds specified
+        return permissions?.deviceId?.split(",")?.contains(deviceId) ?: false
     }
 
 
