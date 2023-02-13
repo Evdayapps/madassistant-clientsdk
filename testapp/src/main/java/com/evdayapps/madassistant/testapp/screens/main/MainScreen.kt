@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 fun MainScreen(
     viewModel: MainScreenViewModel,
     madAssistantClient: MADAssistantClient,
+    passphrase : String,
     logs: MutableState<List<Triple<String, String, String>>>,
     connectionState: MutableState<ConnectionManager.State>,
     sessionActive: MutableState<Boolean>,
@@ -115,6 +116,10 @@ fun MainScreen(
                     .padding(horizontal = 16.dp, vertical = 16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Passphrase", style = MaterialTheme.typography.body2)
+                Text(passphrase, style = MaterialTheme.typography.body1)
+                Spacer(modifier = Modifier.height(16.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(
                         modifier = Modifier.weight(1f),

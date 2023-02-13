@@ -34,16 +34,15 @@ class TestActivity : AppCompatActivity() {
 
         // Set the view
         setContent {
-            MaterialTheme(
-                colors = darkColors()
-            ) {
+            MaterialTheme(colors = darkColors()) {
                 MainScreen(
-                    MainScreenViewModel(madAssistantClient),
-                    madAssistantClient,
-                    logs,
-                    connectionState,
-                    sessionActive,
-                    disconnectReason
+                    viewModel = MainScreenViewModel(madAssistantClient = madAssistantClient),
+                    madAssistantClient = madAssistantClient,
+                    passphrase = "test",
+                    logs = logs,
+                    connectionState = connectionState,
+                    sessionActive = sessionActive,
+                    disconnectReason = disconnectReason
                 )
             }
         }
