@@ -27,9 +27,11 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  *
  * @property cipher Optional implementation of [MADAssistantCipher]
  *
- * @property connectionManager Optional implementation of [ConnectionManagerImpl]
+ * @property connectionManager  implementation of [ConnectionManagerImpl]
  *
- * @property permissionManager An instance of [PermissionManager]. Auto-created if not provided. The instance should be the same across [transmitter] and [connectionManager]
+ * @property permissionManager An instance of [PermissionManager].
+ *                             Auto-created if not provided.
+ *                             The instance should be the same across [transmitter] and [connectionManager]
  *
  * @property transmitter An instance of [Transmitter]. Auto-created if not provided
  */
@@ -41,9 +43,7 @@ class MADAssistantClientImpl(
     // Logs
     private val logger: Logger? = null,
     // Components
-    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(
-        passPhrase = passphrase
-    ),
+    private val cipher: MADAssistantCipher = MADAssistantCipherImpl(passPhrase = passphrase),
     private val permissionManager: PermissionManager = PermissionManagerImpl(
         cipher = cipher,
         logger = logger,
