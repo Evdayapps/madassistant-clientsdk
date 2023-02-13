@@ -34,6 +34,7 @@ fun MainScreen(
     logs: MutableState<List<Triple<String, String, String>>>,
     connectionState: MutableState<ConnectionManager.State>,
     sessionActive: MutableState<Boolean>,
+    disconnectReason: MutableState<String>,
 ) {
     val logsVisible = remember { mutableStateOf(false) }
 
@@ -59,6 +60,9 @@ fun MainScreen(
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
                     Text("Connection State", style = MaterialTheme.typography.h6)
                     Text(connectionState.value.name)
+                    if (disconnectReason.value.isNotBlank()) {
+                        Text(disconnectReason.value)
+                    }
                 }
 
                 Button(

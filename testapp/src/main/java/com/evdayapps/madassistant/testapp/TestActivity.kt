@@ -24,6 +24,7 @@ class TestActivity : AppCompatActivity() {
     val connectionState: MutableState<ConnectionManager.State> =
         mutableStateOf(ConnectionManager.State.None)
     val sessionActive = mutableStateOf(false)
+    val disconnectReason = mutableStateOf("")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +42,8 @@ class TestActivity : AppCompatActivity() {
                     madAssistantClient,
                     logs,
                     connectionState,
-                    sessionActive
+                    sessionActive,
+                    disconnectReason
                 )
             }
         }
@@ -93,11 +95,16 @@ class TestActivity : AppCompatActivity() {
 
                 override fun onConnectionStateChanged(state: ConnectionManager.State) {
                     connectionState.value = state
+                    if (state != ConnectionManager.State.Disconnected) {
+                        disconnectReason.value = ""
+                    }
                 }
 
                 override fun onDisconnected(code: Int, message: String) {
-                    logs.value =
-                        logs.value.plus(Triple("INFO", "Disconnected", "Code: $code\n$message"))
+                    disconnectReason.value = "[$code] $message"
+                    logs.value = logs.value.plus(
+                        Triple("INFO", "Disconnected", "Code: $code\n$message")
+                    )
                 }
 
             }
