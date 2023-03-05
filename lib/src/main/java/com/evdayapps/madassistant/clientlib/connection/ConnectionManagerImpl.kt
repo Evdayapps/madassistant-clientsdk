@@ -26,13 +26,13 @@ class ConnectionManagerImpl(
 ) : ConnectionManager, ServiceConnection, MADAssistantClientAIDL.Stub() {
 
     companion object {
-        const val TAG = "MADAssist:ConnectionManagerImpl"
-
         const val REPO_SERVICE_PACKAGE = "com.evdayapps.madassistant.repository"
         const val REPO_SERVICE_CLASS = "$REPO_SERVICE_PACKAGE.service.MADAssistantService"
         const val DEFAULT_REPO_SIGNATURE = "1B:C0:79:26:82:9E:FB:96:5C:6A:51:6C:96:7C:52:88:42:" +
                 "7E:73:8C:05:7D:60:D8:13:9D:C4:3C:18:3B:E3:63"
     }
+
+    private val TAG = "MADAssist:ConnectionManagerImpl"
 
     private var currentState: ConnectionManager.State = ConnectionManager.State.None
 
@@ -237,12 +237,8 @@ class ConnectionManagerImpl(
         }
 
         when (errorMessage) {
-            null -> {
-                setConnectionState(ConnectionManager.State.Connected)
-            }
-            else -> {
-                disconnect(code = 401, message = "AuthToken Failed")
-            }
+            null -> setConnectionState(ConnectionManager.State.Connected)
+            else -> disconnect(code = 401, message = "AuthToken Failed")
         }
     }
     // endregion Handshake

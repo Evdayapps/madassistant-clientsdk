@@ -33,8 +33,6 @@ class QueueManagerImpl(
 
     private var callback: QueueManager.Callback? = null
 
-    private val cacheTable: Hashtable<Int, MessageData> = Hashtable()
-
     /**
      * Add a new message to the queue
      * @param type The type of the log. One of [MADAssistantTransmissionType]
@@ -51,19 +49,18 @@ class QueueManagerImpl(
     ) {
         if (connectionManager.isConnectedOrConnecting()) {
             try {
-                val data = MessageData(
-                    timestamp = timestamp,
-                    threadName = Thread.currentThread().name,
-                    sessionId = sessionId,
-                    first = first,
-                    second = second,
-                    third = third,
-                    fourth = fourth
+                queueMessage(
+                    type = type,
+                    data = MessageData(
+                        timestamp = timestamp,
+                        threadName = Thread.currentThread().name,
+                        sessionId = sessionId,
+                        first = first,
+                        second = second,
+                        third = third,
+                        fourth = fourth
+                    ),
                 )
-                val key = "$type:$timestamp".hashCode()
-                cacheTable[key] = data
-
-                queueMessage(type = type, key = key)
             } catch (ex: Exception) {
                 logger?.e(ex)
             }
@@ -74,17 +71,11 @@ class QueueManagerImpl(
      * Since the system is not yet ready to send the message (and not disconnecting/disconnected),
      * Queue the message again so its sent when the system is ready
      */
-    internal fun queueMessage(type: Int, key: Int) {
-        /*logger?.v(
-            TAG,
-            "queueMessage: state: ${connectionManager.currentState} type: $type data: ${
-                key.toString().take(256)
-            }"
-        )*/
-
+    internal fun queueMessage(type: Int, data: MessageData) {
         try {
+
             _clientHandler.sendMessage(
-                _clientHandler.obtainMessage(type).apply { arg1 = key }
+                _clientHandler.obtainMessage(type, 0, 0, data)
             )
         } catch (ex: Exception) {
             logger?.e(ex)
@@ -100,23 +91,22 @@ class QueueManagerImpl(
      * - Drops the message if the state is Disconnected
      */
     override fun handleMessage(message: Message): Boolean {
-        /*logger?.v(
-            TAG,
-            "handleMessage: state: ${connectionManager.currentState} message: $message"
-        )*/
+        try {
+            when {
+                connectionManager.isConnected() || connectionManager.isDisconnecting() -> {
+                    callback?.processQueuedMessage(
+                        type = message.what,
+                        data = message.obj as MessageData
+                    )
+                }
 
-        when {
-            connectionManager.isConnected() || connectionManager.isDisconnecting() -> {
-                val data = cacheTable[message.arg1]
-                callback?.processQueuedMessage(type = message.what, data = data as MessageData)
-
-                cacheTable.remove(message.arg1)
+                connectionManager.isConnecting() -> queueMessage(
+                    type = message.what,
+                    data = message.obj as MessageData
+                )
             }
-
-            connectionManager.isConnecting() -> queueMessage(
-                type = message.what,
-                key = message.arg1
-            )
+        } catch (ex: Exception) {
+            logger?.e(ex)
         }
 
         return true
