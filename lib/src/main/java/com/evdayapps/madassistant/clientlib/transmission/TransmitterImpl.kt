@@ -15,7 +15,7 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import com.evdayapps.madassistant.common.models.transmission.TransmissionModel
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.*
+import java.util.UUID
 
 /**
  * Responsibilities:
@@ -243,7 +243,7 @@ class TransmitterImpl(
         if (sessionId != -1L) {
             queueManager.addMessageToQueue(
                 type = MADAssistantTransmissionType.NetworkCall,
-                timestamp = data.requestTimestamp,
+                timestamp = data.request!!.timestamp,
                 sessionId = sessionId,
                 first = data
             )
@@ -277,10 +277,10 @@ class TransmitterImpl(
             val payload = data.first as NetworkCallLogModel
             if (permissionManager.shouldLogNetworkCall(payload)) {
                 // Redact headers as required
-                payload.requestHeaders = trimRedactedHeaders(payload.requestHeaders)
-                payload.responseHeaders = trimRedactedHeaders(payload.responseHeaders)
+                payload.request?.headers = trimRedactedHeaders(payload.request?.headers)
+                payload.response?.headers = trimRedactedHeaders(payload.response?.headers)
 
-                val json = payload.toJsonObject().toString(0)
+                val json = payload.toJson().toString(0)
 
                 transmit(
                     json = json,

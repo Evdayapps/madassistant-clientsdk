@@ -11,7 +11,6 @@ import androidx.compose.runtime.mutableStateOf
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
 import com.evdayapps.madassistant.clientlib.MADAssistantClientImpl
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
-import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.testapp.screens.main.MainScreenViewModel
 
 class TestActivity : AppCompatActivity() {
@@ -49,40 +48,9 @@ class TestActivity : AppCompatActivity() {
     }
 
     private fun initMADAssistant() {
-        val logUtils = object : Logger {
-            override fun i(tag: String, message: String) {
-                logs.value = logs.value.plus(Triple("INFO", tag, message))
-            }
-
-            override fun v(tag: String, message: String) {
-                logs.value = logs.value.plus(Triple("VERBOSE", tag, message))
-            }
-
-            override fun d(tag: String, message: String) {
-                logs.value = logs.value.plus(Triple("DEBUG", tag, message))
-            }
-
-            override fun w(tag: String, message: String) {
-                logs.value = logs.value.plus(Triple("WARN", tag, message))
-            }
-
-            override fun e(throwable: Throwable) {
-                logs.value = logs.value.plus(
-                    Triple(
-                        "ERROR",
-                        throwable::class.java.simpleName,
-                        throwable.message ?: ""
-                    )
-                )
-                throwable.printStackTrace()
-            }
-        }
-
         madAssistantClient = MADAssistantClientImpl(
             applicationContext = applicationContext,
-            repositorySignature = "",
             passphrase = "test",
-            logger = logUtils,
             callback = object : MADAssistantClient.Callback {
                 override fun onSessionStarted(sessionId: Long) {
                     sessionActive.value = true
@@ -104,6 +72,33 @@ class TestActivity : AppCompatActivity() {
                     logs.value = logs.value.plus(
                         Triple("WARN", "Disconnected", "Code: $code\n$message")
                     )
+                }
+
+                override fun i(tag: String, message: String) {
+                    logs.value = logs.value.plus(Triple("INFO", tag, message))
+                }
+
+                override fun v(tag: String, message: String) {
+                    logs.value = logs.value.plus(Triple("VERBOSE", tag, message))
+                }
+
+                override fun d(tag: String, message: String) {
+                    logs.value = logs.value.plus(Triple("DEBUG", tag, message))
+                }
+
+                override fun w(tag: String, message: String) {
+                    logs.value = logs.value.plus(Triple("WARN", tag, message))
+                }
+
+                override fun e(throwable: Throwable) {
+                    logs.value = logs.value.plus(
+                        Triple(
+                            "ERROR",
+                            throwable::class.java.simpleName,
+                            throwable.message ?: ""
+                        )
+                    )
+                    throwable.printStackTrace()
                 }
 
             }
