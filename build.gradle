@@ -2,7 +2,7 @@
 buildscript {
     ext {
         kotlin_version = '1.8.22'
-        versionName = '0.0.28'
+        versionName = '0.0.29'
     }
 
     repositories {
