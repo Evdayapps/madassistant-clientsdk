@@ -2,6 +2,7 @@ package com.evdayapps.madassistant.clientlib
 
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.transmission.Transmitter
+import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
@@ -15,7 +16,7 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  */
 interface MADAssistantClient {
 
-    interface Callback : Transmitter.Callback, ConnectionManager.Callback
+    interface Callback : Transmitter.Callback, ConnectionManager.Callback, Logger
 
     // region Connection
     /**
@@ -28,8 +29,7 @@ interface MADAssistantClient {
      * Disconnect from the service
      *
      * The default implementation in [MADAssistantClientImpl] passes the call to a
-     * [com.evdayapps.madassistant.clientlib.transmission.TransmissionManager] instance that
-     * transmits all logs in the queue and then disconnects from the service
+     * [Transmitter] instance that transmits all logs in the queue and then disconnects from the service
      */
     fun disconnect()
 

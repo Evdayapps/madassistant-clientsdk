@@ -4,13 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.evdayapps.madassistant.adapters.okhttp3.MADAssistantOkHttp3Interceptor
 import com.evdayapps.madassistant.clientlib.MADAssistantClient
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import okhttp3.Request
 
 @Suppress("KotlinConstantConditions")
 class MainScreenViewModel(
@@ -86,25 +80,25 @@ class MainScreenViewModel(
     )
 
     fun testApiCall() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val client = OkHttpClient.Builder()
-                    .addInterceptor(
-                        MADAssistantOkHttp3Interceptor(client = madAssistantClient)
-                    )
-                    .build()
-
-                // Make the call
-                val bldr = Request.Builder().url(networkCallConfig.value.url)
-                networkCallConfig.value.headers.forEach {
-                    bldr.addHeader(it.key, it.value as String)
-                }
-
-                client.newCall(bldr.build()).execute()
-            } catch (ex: Exception) {
-                madAssistantClient.logException(ex)
-            }
-        }
+//        viewModelScope.launch(Dispatchers.IO) {
+//            try {
+//                val client = OkHttpClient.Builder()
+//                    .addInterceptor(
+//                        MADAssistantOkHttp3Interceptor(client = madAssistantClient)
+//                    )
+//                    .build()
+//
+//                // Make the call
+//                val bldr = Request.Builder().url(networkCallConfig.value.url)
+//                networkCallConfig.value.headers.forEach {
+//                    bldr.addHeader(it.key, it.value as String)
+//                }
+//
+//                client.newCall(bldr.build()).execute()
+//            } catch (ex: Exception) {
+//                madAssistantClient.logException(ex)
+//            }
+//        }
     }
 
 

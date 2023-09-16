@@ -7,7 +7,6 @@ import com.evdayapps.madassistant.clientlib.permission.PermissionManager
 import com.evdayapps.madassistant.clientlib.permission.PermissionManagerImpl
 import com.evdayapps.madassistant.clientlib.transmission.Transmitter
 import com.evdayapps.madassistant.clientlib.transmission.TransmitterImpl
-import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipherImpl
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
@@ -16,8 +15,6 @@ import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
  * An implementation of [MADAssistantClient]
  * @property applicationContext The application context
  * @property passphrase The encryption passphrase for the client
- * @property logger Instance of [Logger]
- * @property ignoreDeviceIdCheck Should this instance allow logging even if device id check fails?
  * This is utilised to generate a single auth-token for multiple users.
  * NOT RECOMMENDED!
  *
@@ -39,29 +36,25 @@ class MADAssistantClientImpl(
     private val applicationContext: Context,
     private val passphrase: String,
     private val repositorySignature: String = DEFAULT_SIGNATURE,
-    private val ignoreDeviceIdCheck: Boolean = false,
-    // Logs
-    private val logger: Logger? = null,
+    private val callback: MADAssistantClient.Callback,
     // Components
     private val cipher: MADAssistantCipher = MADAssistantCipherImpl(passPhrase = passphrase),
     private val permissionManager: PermissionManager = PermissionManagerImpl(
         cipher = cipher,
-        logger = logger,
-        ignoreDeviceIdCheck = ignoreDeviceIdCheck
+        logger = callback,
     ),
     private val connectionManager: ConnectionManager = ConnectionManagerImpl(
         applicationContext = applicationContext,
         repositorySignature = repositorySignature,
         permissionManager = permissionManager,
-        logger = logger,
+        logger = callback,
     ),
     private val transmitter: Transmitter = TransmitterImpl(
         cipher = cipher,
         permissionManager = permissionManager,
         connectionManager = connectionManager,
-        logger = logger
+        logger = callback
     ),
-    private val callback: MADAssistantClient.Callback
 ) : MADAssistantClient, ConnectionManager.Callback, Transmitter.Callback {
 
     companion object {

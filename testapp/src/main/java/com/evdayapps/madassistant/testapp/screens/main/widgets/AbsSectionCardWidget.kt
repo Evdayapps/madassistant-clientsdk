@@ -3,8 +3,19 @@ package com.evdayapps.madassistant.testapp.screens.main.widgets
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.Button
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
@@ -68,7 +79,7 @@ private fun SectionCardWidgetTest() {
         paramsTitle = "Headers",
         paramsAddBtnLabel = "Add Header",
         paramsList = { it.headers },
-        updateParams = { config, params -> config },
+        updateParams = { config, _ -> config },
         onUpdateConfig = {},
         onRequestButtonClicked = {}
     )

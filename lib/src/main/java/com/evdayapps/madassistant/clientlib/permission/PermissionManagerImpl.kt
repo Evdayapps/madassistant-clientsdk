@@ -14,7 +14,6 @@ import java.util.regex.Pattern
 class PermissionManagerImpl(
     private val cipher: MADAssistantCipher,
     private val logger: Logger? = null,
-    private val ignoreDeviceIdCheck: Boolean = false
 ) : PermissionManager {
 
     private val TAG = "PermissionManagerImpl"
@@ -44,7 +43,7 @@ class PermissionManagerImpl(
             else -> try {
                 // Decrypt the input string and parse it into a JSON object.
                 val deciphered = cipher.decrypt(string)
-                val json = JSONObject(deciphered)
+                val json = JSONObject(deciphered!!)
                 val permissions = MADAssistantPermissions(json)
 
                 // Store the permissions object in a class property.
@@ -76,13 +75,9 @@ class PermissionManagerImpl(
 
     /**
      * Checks if the id of the current device is in the whitelist
-     * @return true if [ignoreDeviceIdCheck] or device id is in the whitelist
+     * @return true if device id is in the whitelist
      */
     private fun isWhitelistedDevice(deviceId: String): Boolean {
-        if (ignoreDeviceIdCheck) {
-            return true
-        }
-
         // Check if the device id is in the whitelist
         // Returns false if no permissions/deviceIds specified
         return permissions?.deviceId?.split(",")?.contains(deviceId) ?: false
@@ -142,8 +137,9 @@ class PermissionManagerImpl(
             return false
         }
 
-        val chkMethod = patternNetworkCallMethod?.matches(networkCallLogModel.method) ?: true
-        val chkUrl = patternNetworkCallUrl?.matches(networkCallLogModel.url) ?: true
+        val chkMethod =
+            patternNetworkCallMethod?.matches(networkCallLogModel.request?.method) ?: true
+        val chkUrl = patternNetworkCallUrl?.matches(networkCallLogModel.request?.url) ?: true
 
         return chkMethod && chkUrl
     }
@@ -156,7 +152,7 @@ class PermissionManagerImpl(
     }
 
     /**
-     * Test if [exception] should be logged to the repository
+     * Test if [throwable] should be logged to the repository
      */
     override fun shouldLogExceptions(throwable: Throwable): Boolean {
         if (!isLoggingEnabled() || (permissions?.exceptions?.enabled != true)) {
