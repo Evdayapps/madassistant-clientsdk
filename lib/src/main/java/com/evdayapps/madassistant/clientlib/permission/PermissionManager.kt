@@ -1,5 +1,6 @@
 package com.evdayapps.madassistant.clientlib.permission
 
+import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
@@ -60,7 +61,12 @@ interface PermissionManager {
     /**
      * Test if [throwable] should be logged to the repository
      */
-    fun shouldLogExceptions(throwable: Throwable): Boolean
+    fun shouldLogException(throwable: Throwable): Boolean
+
+    /**
+     * Test if [exception] should be logged to the repository
+     */
+    fun shouldLogException(exception: ExceptionModel): Boolean
     // endregion Crash Logs
 
     // region Analytics

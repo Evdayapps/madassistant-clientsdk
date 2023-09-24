@@ -247,6 +247,12 @@ class TransmitterImpl(
                 sessionId = sessionId,
                 first = data
             )
+        } else {
+            logger?.w(
+                tag = TAG,
+                message = "No session initiated, unable to log network call.\n" +
+                        "Please initiate a session first using startSession()",
+            )
         }
     }
 
@@ -315,6 +321,12 @@ class TransmitterImpl(
                     fourth = data
                 )
             )
+        } else {
+            logger?.w(
+                tag = TAG,
+                message = "No session initiated, unable to log crash.\n" +
+                        "Please initiate a session first using startSession()",
+            )
         }
     }
 
@@ -335,6 +347,32 @@ class TransmitterImpl(
                 third = message,
                 fourth = data
             )
+        } else {
+            logger?.w(
+                tag = TAG,
+                message = "No session initiated, unable to log exception.\n" +
+                        "Please initiate a session first using startSession()",
+            )
+        }
+    }
+
+    /**
+     * Log an exception model (non-fatal) in the repository
+     * Required when dealing with exceptions that come from incompatible sources, like Flutter
+     */
+    override fun logException(exception: ExceptionModel) {
+        if (sessionId != -1L) {
+            queueManager.addMessageToQueue(
+                type = MADAssistantTransmissionType.Exception,
+                sessionId = sessionId,
+                first = exception,
+            )
+        } else {
+            logger?.w(
+                tag = TAG,
+                message = "No session initiated, unable to log exception.\n" +
+                        "Please initiate a session first using startSession()",
+            )
         }
     }
 
@@ -343,23 +381,41 @@ class TransmitterImpl(
      */
     private fun _processException(messageData: MessageData) {
         try {
-            val throwable: Throwable = messageData.first as Throwable
-            if (permissionManager.shouldLogExceptions(throwable)) {
-                val json = ExceptionModel(
-                    threadName = messageData.threadName,
-                    throwable = throwable,
-                    isCrash = messageData.second as Boolean,
-                    message = messageData.third?.run { this as String },
-                    data = messageData.fourth?.run { JSONObject(this as Map<String, Any?>) }
-                ).toJsonObject().toString(0)
+            val value = messageData.first
+            when (val input = messageData.first) {
+                is ExceptionModel -> {
+                    if (permissionManager.shouldLogException(input)) {
+                        val json = input.toJsonObject().toString(0)
 
-                transmit(
-                    json = json,
-                    type = MADAssistantTransmissionType.Exception,
-                    sessionId = messageData.sessionId,
-                    timestamp = messageData.timestamp,
-                    encrypt = permissionManager.shouldEncryptLogs()
-                )
+                        transmit(
+                            json = json,
+                            type = MADAssistantTransmissionType.Exception,
+                            sessionId = messageData.sessionId,
+                            timestamp = messageData.timestamp,
+                            encrypt = permissionManager.shouldEncryptLogs()
+                        )
+                    }
+                }
+
+                is Throwable -> {
+                    if (permissionManager.shouldLogException(input)) {
+                        val json = ExceptionModel(
+                            threadName = messageData.threadName,
+                            throwable = input,
+                            isCrash = messageData.second as Boolean,
+                            message = messageData.third?.run { this as String },
+                            data = messageData.fourth?.run { JSONObject(this as Map<String, Any?>) }
+                        ).toJsonObject().toString(0)
+
+                        transmit(
+                            json = json,
+                            type = MADAssistantTransmissionType.Exception,
+                            sessionId = messageData.sessionId,
+                            timestamp = messageData.timestamp,
+                            encrypt = permissionManager.shouldEncryptLogs()
+                        )
+                    }
+                }
             }
         } catch (ex: Exception) {
             logger?.e(ex)

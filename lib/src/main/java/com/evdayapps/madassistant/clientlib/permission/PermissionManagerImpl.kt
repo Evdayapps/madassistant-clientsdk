@@ -4,6 +4,7 @@ import android.util.Log
 import com.evdayapps.madassistant.clientlib.utils.Logger
 import com.evdayapps.madassistant.clientlib.utils.matches
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
+import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 import com.evdayapps.madassistant.common.models.permissions.MADAssistantPermissions
 import org.json.JSONException
@@ -154,7 +155,7 @@ class PermissionManagerImpl(
     /**
      * Test if [throwable] should be logged to the repository
      */
-    override fun shouldLogExceptions(throwable: Throwable): Boolean {
+    override fun shouldLogException(throwable: Throwable): Boolean {
         if (!isLoggingEnabled() || (permissions?.exceptions?.enabled != true)) {
             return false
         }
@@ -164,6 +165,19 @@ class PermissionManagerImpl(
 
         return chkType && chkMessage
     }
+
+    override fun shouldLogException(exception: ExceptionModel): Boolean {
+        if (!isLoggingEnabled() || (permissions?.exceptions?.enabled != true)) {
+            return false
+        }
+
+        val chkType =
+            patternExceptionsType?.matches(exception.stackTrace.firstOrNull()?.className) ?: true
+        val chkMessage = patternExceptionsMessage?.matches(exception.message) ?: true
+
+        return chkType && chkMessage
+    }
+
 
     // region Analytics
     override fun shouldLogAnalytics(
