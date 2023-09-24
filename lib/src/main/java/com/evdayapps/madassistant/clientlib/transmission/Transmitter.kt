@@ -1,5 +1,6 @@
 package com.evdayapps.madassistant.clientlib.transmission
 
+import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
@@ -45,7 +46,9 @@ interface Transmitter {
     fun hasActiveSession(): Boolean
 
     /**
-     * Disconnect from the repository. This method should be called instead of [ConnectionManager.disconnect] because it ensures processing of the log queue
+     * Disconnect from the repository.
+     *
+     * This method should be called instead of [ConnectionManager.disconnect] because it ensures processing of the log queue
      */
     fun disconnect(code: Int, message: String)
 
@@ -70,6 +73,15 @@ interface Transmitter {
         throwable: Throwable,
         message: String? = null,
         data: Map<String, Any>? = null
+    )
+
+    /**
+     * Log an exception model (non-fatal) in the repository
+     *
+     * Required when dealing with exceptions that come from incompatible sources, like Flutter
+     */
+    fun logException(
+        exception: ExceptionModel
     )
 
     /**
