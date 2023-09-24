@@ -9,6 +9,7 @@ import com.evdayapps.madassistant.clientlib.transmission.Transmitter
 import com.evdayapps.madassistant.clientlib.transmission.TransmitterImpl
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipher
 import com.evdayapps.madassistant.common.cipher.MADAssistantCipherImpl
+import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
@@ -173,6 +174,13 @@ class MADAssistantClientImpl(
         message = message,
         data = data
     )
+
+    /**
+     * Log an exception in the system
+     */
+    override fun logException(exception: ExceptionModel) =
+        transmitter.logException(exception = exception)
+
     // endregion Logging
 
 }

@@ -3,6 +3,7 @@ package com.evdayapps.madassistant.clientlib
 import com.evdayapps.madassistant.clientlib.connection.ConnectionManager
 import com.evdayapps.madassistant.clientlib.transmission.Transmitter
 import com.evdayapps.madassistant.clientlib.utils.Logger
+import com.evdayapps.madassistant.common.models.exceptions.ExceptionModel
 import com.evdayapps.madassistant.common.models.networkcalls.NetworkCallLogModel
 
 /**
@@ -125,5 +126,12 @@ interface MADAssistantClient {
         throwable: Throwable,
         message: String? = null,
         data: Map<String, Any>? = null
+    )
+
+    /**
+     * Log an exception in the system
+     */
+    fun logException(
+        exception: ExceptionModel
     )
 }
